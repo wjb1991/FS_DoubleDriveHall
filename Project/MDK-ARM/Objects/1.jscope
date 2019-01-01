@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<JScopeProject>
+    <FileVersion major="1" minor="1" />
+    <Project>
+        <Configuration>
+            <JLink>
+                <Options IsRTTSession="0" IsRTTWithTimeStamp="1" SamplingPeriod="100" Connection="1" SerialNo="0" IP="" TargetDevice="STM32F103C8" TargetInterface="SWD" InterfaceSpeed="4000" />
+            </JLink>
+            <ElfFile Name="D:\Wangjiangbo\Desktop\四轮滑板\STM32F103\Project\_8_加iq数学库\MDK-ARM\Objects\Project.axf" />
+            <DataFile Name="" />
+            <RawFile Name="" />
+            <Scope>
+                <Options TimeResolutionUs="2000000" />
+            </Scope>
+        </Configuration>
+        <Windows>
+            <Graph Show="1" />
+            <Watch Show="1" />
+        </Windows>
+        <SelectedSymbols>
+            <Symbol>
+                <Options Name="sMC_CurrentPhaseU" Address="0x20000008" Type="short" TypeID="11" Size="2" GraphColorRed="255" GraphColorGreen="0" GraphColorBlue="0" YMinSampled="4048" YMaxSampled="4073" YAvgSampled="4056" Offset="4" ShowInGraph="1" YOffset="200" IsAutoConfig="1" YResolution="5000" MaxValue="10000" File="..\User\main.c" Scope="0" DrawStyle="0" />
+            </Symbol>
+            <Symbol>
+                <Options Name="sMC_CurrentPhaseV" Address="0x2000000A" Type="short" TypeID="11" Size="2" GraphColorRed="0" GraphColorGreen="191" GraphColorBlue="255" YMinSampled="3984" YMaxSampled="4007" YAvgSampled="3984" Offset="6" ShowInGraph="1" YOffset="200" IsAutoConfig="1" YResolution="5000" MaxValue="10000" File="..\User\main.c" Scope="0" DrawStyle="0" />
+            </Symbol>
+            <Symbol>
+                <Options Name="usFOC_CurrU" Address="0x2000009A" Type="short" TypeID="11" Size="2" GraphColorRed="0" GraphColorGreen="0" GraphColorBlue="176" YMinSampled="4063" YMaxSampled="4111" YAvgSampled="4065" Offset="8" ShowInGraph="1" YOffset="200" IsAutoConfig="1" YResolution="5000" MaxValue="10000" File="..\User\foc.c" Scope="0" DrawStyle="0" />
+            </Symbol>
+            <Symbol>
+                <Options Name="usFOC_CurrV" Address="0x20000098" Type="short" TypeID="11" Size="2" GraphColorRed="160" GraphColorGreen="32" GraphColorBlue="240" YMinSampled="-2048" YMaxSampled="-2025" YAvgSampled="-2028" Offset="10" ShowInGraph="1" YOffset="200" IsAutoConfig="1" YResolution="1000" MaxValue="2000" File="..\User\foc.c" Scope="0" DrawStyle="0" />
+            </Symbol>
+        </SelectedSymbols>
+    </Project>
+</JScopeProject>
