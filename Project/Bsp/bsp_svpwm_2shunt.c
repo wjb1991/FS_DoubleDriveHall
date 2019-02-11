@@ -63,7 +63,8 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     vGPIO_Configuration();
     
     TIM_DeInit(TIM1);
-
+    TIM_DeInit(TIM8);
+		
     /* Time Base configuration */
     TIM_TimeBaseStructure.TIM_Prescaler = 3;                                        //设置预分频值
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned1;
@@ -72,7 +73,8 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     TIM_TimeBaseStructure.TIM_RepetitionCounter = 1;                                //重复寄存器，用于自动更新pwm占空比
 
     TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
-
+    TIM_TimeBaseInit(TIM8, &TIM_TimeBaseStructure);
+		
     /* Channel 1, 2 and 3 Configuration in PWM mode */
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;                                //设置为pwm1输出模式
                                                                                     /*：PWM模式1－ 
@@ -92,13 +94,16 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     //设置通道1捕获比较寄存器的脉冲值
     TIM_OCInitStructure.TIM_Pulse = 0;
     TIM_OC1Init(TIM1, &TIM_OCInitStructure);
+    TIM_OC1Init(TIM8, &TIM_OCInitStructure);
     //设置通道2捕获比较寄存器的脉冲值
     TIM_OCInitStructure.TIM_Pulse = 0;
     TIM_OC2Init(TIM1, &TIM_OCInitStructure);
+    TIM_OC2Init(TIM8, &TIM_OCInitStructure);
     //设置通道3捕获比较寄存器的脉冲值
     TIM_OCInitStructure.TIM_Pulse = 0;
     TIM_OC3Init(TIM1, &TIM_OCInitStructure);
-    
+    TIM_OC3Init(TIM8, &TIM_OCInitStructure);
+		
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;                   //使能该通道输出//比较输出使能
     TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;                 //使能互补端输出
     
@@ -106,7 +111,7 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     //TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;     //PWM2在过中点之前 PWM1在过中点之后
     TIM_OCInitStructure.TIM_Pulse = 0x1FE;//(SystemCoreClock / nFrequency) - 2;
     TIM_OC4Init(TIM1, &TIM_OCInitStructure);
-    
+    TIM_OC4Init(TIM8, &TIM_OCInitStructure);
 
     //第五步，死区和刹车功能配置，高级定时器才有的，通用定时器不用配置TIM_BDTRInitStructure，共七项配置
     TIM_BDTRInitStructure.TIM_OSSRState = TIM_OSSRState_Enable;                    //运行模式下输出选择
@@ -118,14 +123,20 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     TIM_BDTRInitStructure.TIM_AutomaticOutput = TIM_AutomaticOutput_Disable;         //自动输出使能 刹车后松开刹车 是否自动开启PWM
 
     TIM_BDTRConfig(TIM1, &TIM_BDTRInitStructure);
-    
+    TIM_BDTRConfig(TIM8, &TIM_BDTRInitStructure);
+		
     //第六步，使能端的打开
     TIM_OC1PreloadConfig(TIM1, TIM_OCPreload_Enable);               //使能TIMx在CCR1上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
-    TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);               //使能TIMx在CCR2上的预装载寄存器
+    TIM_OC2PreloadConfig(TIM1, TIM_OCPreload_Enable);               //使能TIMx在CCR2上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
     TIM_OC3PreloadConfig(TIM1, TIM_OCPreload_Enable);               //使能TIMx在CCR3上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
     TIM_OC4PreloadConfig(TIM1, TIM_OCPreload_Enable);               //使能TIMx在CCR3上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
     //TIM_ARRPreloadConfig(TIM1,ENABLE);                            //使能TIMx在ARR上的预装载寄存器?//立刻改变频率
-    
+		
+    TIM_OC1PreloadConfig(TIM8, TIM_OCPreload_Enable);               //使能TIMx在CCR1上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
+    TIM_OC2PreloadConfig(TIM8, TIM_OCPreload_Enable);               //使能TIMx在CCR2上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
+    TIM_OC3PreloadConfig(TIM8, TIM_OCPreload_Enable);               //使能TIMx在CCR3上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
+    TIM_OC4PreloadConfig(TIM8, TIM_OCPreload_Enable);               //使能TIMx在CCR3上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
+    //TIM_ARRPreloadConfig(TIM1,ENABLE);                            //使能TIMx在ARR上的预装载寄存器?//立刻改变频率
 
     // ADC配置
     /* DMA1 Channel1 Configuration ----------------------------------------------*/
@@ -136,8 +147,8 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     DMA_InitStructure.DMA_BufferSize = 32;
     DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
     DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
-    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
+    DMA_InitStructure.DMA_PeripheralDataSize = DMA_MemoryDataSize_HalfWord;
+    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
     DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
     DMA_InitStructure.DMA_Priority = DMA_Priority_High;
     DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
@@ -164,38 +175,45 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
     ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None; //ADC_ExternalTrigConv_None
     ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-    ADC_InitStructure.ADC_NbrOfChannel = 2;                             //规则通道数量
+    ADC_InitStructure.ADC_NbrOfChannel = 0;                             //规则通道数量
     ADC_Init(ADC2, &ADC_InitStructure);
     
-    //page157 温度传感器和VREFINT只能出现在主ADC1中。
-    //dma 数组的对应关系 buff[0]高16位 adc2注入0 第16位 adc1注入0
-    //                   buff[1]高16位 adc2注入1 第16位 adc1注入1
+    /* ADC3 configuration ------------------------------------------------------*/
+    ADC_InitStructure.ADC_Mode = ADC_Mode_RegInjecSimult;                  //
+    ADC_InitStructure.ADC_ScanConvMode = ENABLE;
+    ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
+    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None; //ADC_ExternalTrigConv_None
+    ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+    ADC_InitStructure.ADC_NbrOfChannel = 0;                             //规则通道数量
+    ADC_Init(ADC3, &ADC_InitStructure);
+    
+    
+    //page157 温度传感器和VREFINT只能出现在主ADC1中
     //==============ADC1规则通道配置==============//
     /* ADC1 regular channel14 configuration */ 
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 1, ADC_SampleTime_239Cycles5);    //PA2 温度传感器  on chip temp ADC_Channel_16
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 2, ADC_SampleTime_239Cycles5);    //PA7 母线电流    Vrefin ADC_Channel_17
-    //ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 3, ADC_SampleTime_XCycles5);     //PA6 IN6黄
-    //==============ADC1注入通道配置==============//
-    /* Set injected sequencer length */
-    ADC_InjectedSequencerLengthConfig(ADC1, 1);                         //注入通道数量    
-    /* ADC1 injected channel Configuration */ 
-    ADC_InjectedChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_XCycles5);    //PB0 IN8蓝 
-    /* ADC1 injected external trigger configuration */
-    ADC_ExternalTrigInjectedConvConfig(ADC1, ADC_ExternalTrigInjecConv_T1_TRGO);// ADC_ExternalTrigInjecConv_T1_CC4
-
-    //==============ADC2规则通道配置==============//
-    /* ADC2 regular channel14 configuration */ 
-    ADC_RegularChannelConfig(ADC2, ADC_Channel_0, 1, ADC_SampleTime_239Cycles5);     //PA0 IN0充电端口 
-    ADC_RegularChannelConfig(ADC2, ADC_Channel_1, 2, ADC_SampleTime_239Cycles5);     //PA1 IN1母线电压
-    //ADC_RegularChannelConfig(ADC2, ADC_Channel_4, 3, ADC_SampleTime_XCycles5);     //PA4 IN4按键
-
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 1, ADC_SampleTime_239Cycles5);    	//PA2 温度传感器  on chip temp ADC_Channel_16
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 2, ADC_SampleTime_239Cycles5);    	//PA2 温度传感器  on chip temp ADC_Channel_16
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 3, ADC_SampleTime_239Cycles5);    	//PA7 母线电流    Vrefin ADC_Channel_17
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 4, ADC_SampleTime_239Cycles5);     	//PA0 IN0充电端口 
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 5, ADC_SampleTime_239Cycles5);     	//PA1 IN1母线电压
+    
+    
     //==============ADC2注入通道配置==============//
     /* Set injected sequencer length */
     ADC_InjectedSequencerLengthConfig(ADC2, 1);                         //注入通道数量    
     /* ADC1 injected channel Configuration */ 
-    ADC_InjectedChannelConfig(ADC2, ADC_Channel_9, 1, ADC_SampleTime_XCycles5);    //PB1 IN9绿
+    ADC_InjectedChannelConfig(ADC2, ADC_Channel_8, 1, ADC_SampleTime_XCycles5);    //PB1 IN9绿
     /* ADC1 injected external trigger configuration */
-    ADC_ExternalTrigInjectedConvConfig(ADC2, ADC_ExternalTrigInjecConv_None);       //从ADC模块用软件触发
+    ADC_ExternalTrigInjectedConvConfig(ADC2, ADC_ExternalTrigInjecConv_T1_CC4);       //从ADC模块用软件触发
+    
+    //==============ADC3注入通道配置==============//
+    /* Set injected sequencer length */
+    ADC_InjectedSequencerLengthConfig(ADC3, 1);                                     //注入通道数量    
+    /* ADC1 injected channel Configuration */ 
+    ADC_InjectedChannelConfig(ADC3, ADC_Channel_9, 1, ADC_SampleTime_XCycles5);     //PB1 IN9绿
+    /* ADC1 injected external trigger configuration */
+    ADC_ExternalTrigInjectedConvConfig(ADC3, ADC_ExternalTrigInjecConv_T1_CC4);       //从ADC模块用软件触发
+    
     
     /* Enable automatic injected conversion start after regular one */
     //ADC_AutoInjectedConvCmd(ADC1, ENABLE);                            //自动注入 软件触发也算注入了
@@ -207,16 +225,29 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     ADC_ExternalTrigConvCmd(ADC1, DISABLE);
     
     /* Enable ADC1 external Injected trigger */ 
-    ADC_ExternalTrigInjectedConvCmd(ADC1, ENABLE); 
+    ADC_ExternalTrigInjectedConvCmd(ADC1, DISABLE); 
+    
+    
     
     /* Enable ADC2 external trigger */ 
-    ADC_ExternalTrigConvCmd(ADC2, ENABLE);
+    ADC_ExternalTrigConvCmd(ADC2, DISABLE);
     
     /* Enable ADC2 external Injected trigger */ 
     ADC_ExternalTrigInjectedConvCmd(ADC2, ENABLE); 
     
     /* Enable JEOC interrupt */
-    ADC_ITConfig(ADC1, ADC_IT_JEOC, ENABLE);
+    ADC_ITConfig(ADC2, ADC_IT_JEOC, ENABLE);
+    
+    
+    
+    /* Enable ADC3 external trigger */ 
+    ADC_ExternalTrigConvCmd(ADC3, ENABLE);
+    
+    /* Enable ADC3 external Injected trigger */ 
+    ADC_ExternalTrigInjectedConvCmd(ADC3, ENABLE); 
+    
+    /* Enable JEOC interrupt */
+    ADC_ITConfig(ADC3, ADC_IT_JEOC, ENABLE);
 
     //==============开启ADC1 校正ADC==============//
     /* Enable ADC1 */
@@ -241,6 +272,27 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     /* Check the end of ADC1 reset calibration register */
     while(ADC_GetResetCalibrationStatus(ADC2));
 
+    /* Start ADC1 calibration */
+    ADC_StartCalibration(ADC2);
+    /* Check the end of ADC1 calibration */
+    while(ADC_GetCalibrationStatus(ADC2));
+    
+    
+    //==============开启ADC3 校正ADC==============//
+    /* Enable ADC3 */
+    ADC_Cmd(ADC3, ENABLE);
+
+    /* Enable ADC2 reset calibration register */   
+    ADC_ResetCalibration(ADC3);
+    /* Check the end of ADC1 reset calibration register */
+    while(ADC_GetResetCalibrationStatus(ADC3));
+
+    /* Start ADC1 calibration */
+    ADC_StartCalibration(ADC3);
+    /* Check the end of ADC1 calibration */
+    while(ADC_GetCalibrationStatus(ADC3));
+    
+
     //==============开启ADC1_2规则转换==============//
     /* Start ADC1 calibration */
     ADC_StartCalibration(ADC1);
@@ -256,15 +308,18 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     
     /* TIM1 counter enable */
     TIM_Cmd(TIM1, ENABLE);
-    
+    TIM_Cmd(TIM8, ENABLE);
+		
     // Resynch to have the Update evend during Undeflow
     //TIM_GenerateEvent(TIM1, TIM_EventSource_Update);                //主动发生UEV事件,UG=1
     
     /* Main Output Enable */
     TIM_CtrlPWMOutputs(TIM1, DISABLE);
-
-    TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_OC4Ref);           //触发时间输出配置
-    
+    TIM_CtrlPWMOutputs(TIM8, DISABLE);
+		
+    TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_OC4Ref);               //触发时间输出配置
+    TIM_SelectOutputTrigger(TIM8, TIM_TRGOSource_OC4Ref);               //触发时间输出配置
+		
     /* Clear Update Flag */ 
     //TIM_ClearFlag(TIM1, TIM_FLAG_Update);
 
@@ -272,7 +327,8 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
 
     //TIM_ITConfig(TIM1, TIM_IT_CC4,DISABLE);
     ADC_ClearITPendingBit(ADC1,ADC_IT_JEOC);
-
+    ADC_ClearITPendingBit(ADC3,ADC_IT_JEOC);
+    
     vNVIC_Configuration();
     
     return 0;
@@ -356,12 +412,9 @@ void vBSP_SVPWM_2ShuntCurrentReadingCalibration(void)
 void vRCC_Configuration(void)
 {
     //配置时钟定时器时钟 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);                            //使能定时器3时钟
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB,ENABLE);       //使能GPIO和服用功能时钟
-//  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO,ENABLE);                             //引脚重映射要开这个时钟
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_GPIOA | 
-                         RCC_APB2Periph_GPIOB |RCC_APB2Periph_AFIO, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_TIM8 | 
+                           RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB |RCC_APB2Periph_AFIO, ENABLE);
      
     //配置ADC时钟
 #if defined (STM32F10X_LD_VL) || defined (STM32F10X_MD_VL) || defined (STM32F10X_HD_VL)
@@ -376,7 +429,7 @@ void vRCC_Configuration(void)
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
     /* Enable ADC1, ADC2 and GPIOC clock */
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_ADC2 |
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_ADC2 | RCC_APB2Periph_ADC3 |
                          RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC, ENABLE);
 }
 
@@ -389,20 +442,19 @@ void vGPIO_Configuration(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure; 
     
+	
+		//PC0 POWAD 	PC1 IWR 		PC2 IUR 		PC3 IVR
+		//PA1	IWL			PA2	IUL			PA3	IVL			PA12 CharAd
     //配置ADC引脚
     /* Configure PC.01, PC.02 and PC.04 (ADC Channel11, Channel12 and Channel14)
     as analog input ----------------------------------------------------------*/
-    //PA6 IN6黄 PA1 IN1母线电压 PA4 IN4按键 PA0 IN0充电端口 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_7| GPIO_Pin_6;
+    //
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_12;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
-    //PB0 IN8蓝 PB1 IN9绿 PB12 温度传感器这个有问题
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
 
     //GL BL PC4 ANIN14 PC5 AIN15
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
     GPIO_Init(GPIOC, &GPIO_InitStructure);    
     
@@ -411,18 +463,25 @@ void vGPIO_Configuration(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     
     /* GPIOA Configuration: Channel 1, 2 and 3 as alternate function push-pull */
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     /* GPIOB Configuration: Channel 1N, 2N and 3N as alternate function push-pull */
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
     GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
 
     /* GPIOB Configuration: BKIN pin */
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//GPIO_Mode_IN_FLOATING;
     GPIO_Init(GPIOB, &GPIO_InitStructure); 
-    
+		
+    /* GPIOA Configuration: BKIN pin */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;//GPIO_Mode_IN_FLOATING;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);  
 }
 
 /**
@@ -457,6 +516,9 @@ void vNVIC_Configuration(void)
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+    
+    NVIC_InitStructure.NVIC_IRQChannel = ADC3_IRQn;
     NVIC_Init(&NVIC_InitStructure);
 } 
 

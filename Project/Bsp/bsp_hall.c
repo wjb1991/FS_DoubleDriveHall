@@ -47,10 +47,14 @@ static void vGPIO_Configuration(void)
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC,ENABLE);        //使能GPIO和服用功能时钟
 
     //PC10 - PC12
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15 | GPIO_Pin_14| GPIO_Pin_13;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11| GPIO_Pin_12;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;               //开启内部上拉和外部上拉一起
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOC, &GPIO_InitStructure);
-    
+    //PB5 - PB7
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_6| GPIO_Pin_7;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;               //开启内部上拉和外部上拉一起
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure); 
 }
 

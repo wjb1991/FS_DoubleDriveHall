@@ -21,8 +21,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "bsp.h"
-#include "foc.h"
-#include "mc_estHallAngle.h"
+#include "focL.h"
+#include "mc_estHallAngleL.h"
 #include "rf2_4g.h"
 
 
@@ -64,7 +64,7 @@ int32_t nMC_MotorEnableFlag = 0;
 
 int8_t ucMC_CalibrationErr = 0;
 
-int16_t	sFOC_QOutFreeMax = 0;
+int16_t	sFOC_QOutLFreeMax = 0;
 
 systemstate_t ucSystemState = eSystemInit;
 
@@ -182,34 +182,34 @@ void TorqueLoopCtrl(void)
         pitchAbs = sFOC_PitchTorqueCmd;
     }
     
-    if ( sFOC_QOut < 0 )
+    if ( sFOC_QOutL < 0 )
     {
-        QOutAbs = -sFOC_QOut;
+        QOutAbs = -sFOC_QOutL;
     }
     else
     {
-        QOutAbs = sFOC_QOut;
+        QOutAbs = sFOC_QOutL;
     }
 
     if ( pitchAbs <= QOutAbs )
     {
-        sFOC_QOut = sFOC_PitchTorqueCmd;
+        sFOC_QOutL = sFOC_PitchTorqueCmd;
     }		
     else //if ( H200000BB_UB_OverLoad_VoltageLow_RAxis  == 0)		
     {
-        if ( sFOC_QOut > sFOC_PitchTorqueCmd )				
+        if ( sFOC_QOutL > sFOC_PitchTorqueCmd )				
         {
-            if ( sFOC_QOut <= sFOC_PitchTorqueCmd + 2 )
-                sFOC_QOut = sFOC_PitchTorqueCmd;
+            if ( sFOC_QOutL <= sFOC_PitchTorqueCmd + 2 )
+                sFOC_QOutL = sFOC_PitchTorqueCmd;
             else
-                sFOC_QOut -= 2;
+                sFOC_QOutL -= 2;
         }
-        else if ( sFOC_QOut < sFOC_PitchTorqueCmd )
+        else if ( sFOC_QOutL < sFOC_PitchTorqueCmd )
         {
-            if ( sFOC_QOut + 2 >= sFOC_PitchTorqueCmd )			
-                sFOC_QOut = sFOC_PitchTorqueCmd;
+            if ( sFOC_QOutL + 2 >= sFOC_PitchTorqueCmd )			
+                sFOC_QOutL = sFOC_PitchTorqueCmd;
             else 
-                sFOC_QOut += 2;  
+                sFOC_QOutL += 2;  
         }
     }
 }
@@ -223,7 +223,7 @@ void SpeedLoopCtrl(void)
         ucMC_SpeedLoopCnt = 0;
         {
 
-            int32_t errT = (nMc_SpeedRef_RPM>>16) - sMC_HallEstSpeed_RPM;
+            int32_t errT = (nMc_SpeedRef_RPM>>16) - sMC_HallEstSpeed_RPML;
             
             errT <<= 16;      //IQ16;
             errT = errT / 60 / 200;
@@ -357,7 +357,7 @@ void Motion(void)
         {
             
             //nMC_SpeedPIDInteger = 0;
-            nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPM)<<16;  
+            nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPML)<<16;  
                         
             MotionState = 0;
         }
@@ -372,7 +372,7 @@ void Motion(void)
         nMC_SpeedCmd_RPM = 0; 
         
 /** 积分清除 */     
-        if( sMC_HallEstSpeed_RPM == 0 )
+        if( sMC_HallEstSpeed_RPML == 0 )
         {  
             if( nMC_SpeedPIDInteger > (10L<<16))
             {
@@ -401,7 +401,7 @@ void Motion(void)
         }
 
 /**     积分限制    */
-        if( sMC_HallEstSpeed_RPM < 100 && sMC_HallEstSpeed_RPM > -100)
+        if( sMC_HallEstSpeed_RPML < 100 && sMC_HallEstSpeed_RPML > -100)
         {
             if( ucDirMode )
             {            
@@ -423,7 +423,7 @@ void Motion(void)
 /*      积分清除放反转     
         if( ucDirMode )
         {
-            if( sMC_HallEstSpeed_RPM <= 0 )
+            if( sMC_HallEstSpeed_RPML <= 0 )
             {  
                 if( nMC_SpeedPIDInteger < (-10L<<16) )
                 {
@@ -437,7 +437,7 @@ void Motion(void)
         }
         else
         {
-            if( sMC_HallEstSpeed_RPM >= 0 )
+            if( sMC_HallEstSpeed_RPML >= 0 )
             {  
                 if( nMC_SpeedPIDInteger > (10L<<16))
                 {
@@ -456,7 +456,7 @@ void Motion(void)
     if( sADValue < -60)
     {
         cMC_MotorState = 2;
-        if( sFOC_QOut == 0 )
+        if( sFOC_QOutL == 0 )
         {
             
         }
@@ -469,17 +469,17 @@ void Motion(void)
         if( MotionState != 1 )
         {
             //nMC_SpeedPIDInteger = 0;
-            nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPM)<<16;  
+            nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPML)<<16;  
             MotionState = 1;
         }
         
-        if( sFOC_QOut < 80 && ucDirMode == 1 )
+        if( sFOC_QOutL < 80 && ucDirMode == 1 )
         {
-            sFOC_QOut+=2;
+            sFOC_QOutL+=2;
         }
-        else if( sFOC_QOut > -80 && ucDirMode == 0 )
+        else if( sFOC_QOutL > -80 && ucDirMode == 0 )
         {
-            sFOC_QOut-=2;
+            sFOC_QOutL-=2;
         } 
         
         if( ucDirMode )
@@ -522,7 +522,7 @@ void Motion(void)
         
         {
             int32_t absSpeedRef = nMC_SpeedCmd_RPM;
-            int32_t absSpeedFdbk = sMC_HallEstSpeed_RPM;
+            int32_t absSpeedFdbk = sMC_HallEstSpeed_RPML;
 
             if(( absSpeedRef >= 0 && absSpeedFdbk >= 0)||
                 ( absSpeedRef <= 0 && absSpeedFdbk <= 0))
@@ -550,7 +550,7 @@ void Motion(void)
             MotionState = 2;
             
         }
-        nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPM)<<16;         
+        nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPML)<<16;         
         nMC_SpeedCmd_RPM = 0;
         cMC_MotorState = 0;      
 
@@ -559,7 +559,7 @@ void Motion(void)
             DelayTime++;
         if( DelayTime >= 250)
         {
-            nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPM)<<16;  
+            nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPML)<<16;  
             cMC_MotorState = 0;
 
         }
@@ -568,7 +568,7 @@ void Motion(void)
         if( MotionState != 2 )
         {
             MotionState = 2;
-            nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPM)<<16; 
+            nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPML)<<16; 
         }   
         nMC_SpeedCmd_RPM = 0;
 */
@@ -576,31 +576,7 @@ void Motion(void)
 
 }
 
-void serialPortHunterDebugLog(void)
-{
-    static uint8_t buff[17] = {0};
-    int i = 0;
-    for(i = 0; i<17;i++)
-        buff[i] = 0;
-    //usFOC_CurrU usFOC_CurrV
-    buff[0] = 0xa5;
-    buff[1] = usFOC_CurrD >> 8;
-    buff[2] = (uint8_t)(usFOC_CurrD & 0x00ff);
-    
-    buff[3] = usFOC_CurrQ >> 8;
-    buff[4] = (uint8_t)(usFOC_CurrQ & 0x00ff);
-    
-    buff[5] = usFOC_CurrAlpha >> 8;
-    buff[6] = (uint8_t)(usFOC_CurrAlpha & 0x00ff);       
-    for(i = 0; i< 6; i++)
-    {
-        USART_SendData(USART2, (uint8_t) buff[i]);
 
-        /* Loop until the end of transmission */
-        while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET)
-        {}
-    }
-}    
 
 void SystemErrorCatch(void)
 {
@@ -624,7 +600,7 @@ void SystemErrorCatch(void)
         }
 
         //霍尔错误 故障3
-        if(ucMC_HallSectorErr)
+        if(ucMC_HallSectorErrL)
         {
             ucComErrState = 0x01;       //报控制出错            
             ucSystemErrID = 2;
@@ -773,19 +749,28 @@ int main(void)
    
     vBSP_HALLInit();
 
-    vBSP_SetSVPWMDutyPhaseU_Pu(0);    //512上限
-    vBSP_SetSVPWMDutyPhaseV_Pu(0);    //512上限
-    vBSP_SetSVPWMDutyPhaseW_Pu(0);    //512上限
-
+    vBSP_SetSVPWMDutyPhaseU_Pu(DEF_MOTOR_L,100);    //512上限
+    vBSP_SetSVPWMDutyPhaseV_Pu(DEF_MOTOR_L,100);    //512上限
+    vBSP_SetSVPWMDutyPhaseW_Pu(DEF_MOTOR_L,100);    //512上限
+    
+    vBSP_SetSVPWMDutyPhaseU_Pu(DEF_MOTOR_R,100);    //512上限
+    vBSP_SetSVPWMDutyPhaseV_Pu(DEF_MOTOR_R,100);    //512上限
+    vBSP_SetSVPWMDutyPhaseW_Pu(DEF_MOTOR_R,100);    //512上限
+    
+    vBSP_SetKeyLed(0);
+    vBSP_SetKeyLed(1);
+    
     vBSP_EnableSVPWMOutput();
     if(vBSP_SVPWM_2ShuntCurrentReadingCalibration1() != 0)
     {
         ucMC_CalibrationErr = 1;
     }
+    while(1);
+    
     vBSP_DisableSVPWMOutput();
     /* Infinite loop */
-    usMC_HallEva_IntervalTime = 16872;
-    sMC_HallEstSpeed_RPM = 0;
+    usMC_HallEva_IntervalTimeL = 16872;
+    sMC_HallEstSpeed_RPML = 0;
     cMC_MotorState = 0;
     nMC_InitFinished = 1;
     while (1)
@@ -846,12 +831,18 @@ int main(void)
     }
 }
 
+///左轴TIM1
 void ADC1_2_IRQHandler(void)
 {
     if( ADC_GetITStatus(ADC1,ADC_IT_JEOC))
     {
-        ADC_ClearITPendingBit(ADC1,ADC_IT_JEOC);    
-        
+        ADC_ClearITPendingBit(ADC1,ADC_IT_JEOC);  
+    }
+    
+    if( ADC_GetITStatus(ADC2,ADC_IT_JEOC))
+    {
+        ADC_ClearITPendingBit(ADC2,ADC_IT_JEOC);    
+
         //获取相电流
         //sk-1s ADC增加43.6906666666 电流增加1A
         sMC_CurrentPhaseU = sBSP_GetCurrentPhaseU();    //a14   蓝线
@@ -859,18 +850,18 @@ void ADC1_2_IRQHandler(void)
         if(nMC_InitFinished)
         {
 
-            usFOC_CurrU = -(usMC_PhaseAOffset - sMC_CurrentPhaseU) - (usMC_PhaseBOffset - sMC_CurrentPhaseV);               //绿线
-            usFOC_CurrV = usMC_PhaseAOffset - sMC_CurrentPhaseU;                                    //蓝线
+            sFOC_CurrUL = -(usMC_PhaseAOffset - sMC_CurrentPhaseU) - (usMC_PhaseBOffset - sMC_CurrentPhaseV);               //绿线
+            sFOC_CurrVL = usMC_PhaseAOffset - sMC_CurrentPhaseU;                                    //蓝线
 
             
-            vMC_EST_HallAngle();      
+            vMC_EST_HallAngleL();      
             
             if( cMC_MotorState == 0 || ucOverLoadFlag == 1)
             {
                 //nMC_SpeedPIDInteger = 0;  
-                nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPM)<<16;  
+                nMc_SpeedRef_RPM = ((int32_t)sMC_HallEstSpeed_RPML)<<16;  
                 //sFOC_PitchTorqueCmd = 0; 
-                //sFOC_QOut = 0;            
+                //sFOC_QOutL = 0;            
             }
             else if( cMC_MotorState == 1 )
             {         
@@ -882,7 +873,7 @@ void ADC1_2_IRQHandler(void)
                 }
             }  
 
-            if ( ucMC_HallEva_LowSpeedorEdged )
+            if ( ucMC_HallEva_LowSpeedorEdgedL )
             {
                 //低速不调整ID
                 vFOC_MotorLock();
@@ -897,7 +888,7 @@ void ADC1_2_IRQHandler(void)
                 }
             }
             vFOC_IPark();
-            if((cMC_MotorState != 2 || sFOC_QOut != 0 ) && (cMC_MotorState != 0 || sFOC_QOut != 0 ))
+            if((cMC_MotorState != 2 || sFOC_QOutL != 0 ) && (cMC_MotorState != 0 || sFOC_QOutL != 0 ))
                 vFOC_SVPWM();
             
             
@@ -918,25 +909,25 @@ void ADC1_2_IRQHandler(void)
                     vBSP_BrakeDisable();  
                     if (cMC_LastMotorState == 1)
                     {
-                        if (sMC_HallEstSpeed_RPM > 500)
-                            sFOC_QOutFreeMax = sFOC_QOut * 2 / 5;
+                        if (sMC_HallEstSpeed_RPML > 500)
+                            sFOC_QOutLFreeMax = sFOC_QOutL * 2 / 5;
                         else
-                            sFOC_QOutFreeMax = sFOC_QOut / 3;
+                            sFOC_QOutLFreeMax = sFOC_QOutL / 3;
                         
-                        if (sFOC_QOutFreeMax < 0)
-                            sFOC_QOutFreeMax = -sFOC_QOutFreeMax;
+                        if (sFOC_QOutLFreeMax < 0)
+                            sFOC_QOutLFreeMax = -sFOC_QOutLFreeMax;
                     }
                     
                     if( dectime == 0)
                     {
 #if 0                     
-                        if(sFOC_QOut < 0) {
-                            sFOC_QOut++;
+                        if(sFOC_QOutL < 0) {
+                            sFOC_QOutL++;
                             uiBackPWMDuty = 255;
                             dectime = 20;//60
                         }
-                        else if(sFOC_QOut > 0) {
-                            sFOC_QOut--;
+                        else if(sFOC_QOutL > 0) {
+                            sFOC_QOutL--;
                             uiBackPWMDuty = 255;
                             dectime = 20;//60
                         }
@@ -952,55 +943,55 @@ void ADC1_2_IRQHandler(void)
                                 nMC_MotorEnableFlag = 0;
                                 vFOC_MotorLock(); 
                                 vBSP_DisableSVPWMOutput();
-                                sFOC_QOut = 0;
+                                sFOC_QOutL = 0;
                                 sFOC_PitchTorqueCmd = 0;
                                 nMC_SpeedPIDInteger = 0;
                             }
                             dectime = 50;//60
                         }
 
-                        if( sFOC_QOut > 500 )
-                            sFOC_QOut-=1;
-                        else if( sFOC_QOut < -500)
-                            sFOC_QOut+=1;
-                        sFOC_PitchTorqueCmd = sFOC_QOut;
+                        if( sFOC_QOutL > 500 )
+                            sFOC_QOutL-=1;
+                        else if( sFOC_QOutL < -500)
+                            sFOC_QOutL+=1;
+                        sFOC_PitchTorqueCmd = sFOC_QOutL;
                         nMC_SpeedPIDInteger = sFOC_PitchTorqueCmd << 16;
 #endif                   
                    
                         if( uiBackPWMDuty <= 255 )
                         {
 
-                            int16_t sAbsFOC_QOut = sFOC_QOut;
+                            int16_t sAbsFOC_QOutL = sFOC_QOutL;
                           
                             uiBackPWMDuty = 255;
                             dectime = 50;//60
                             
-                            if(sAbsFOC_QOut < 0)
-                                sAbsFOC_QOut = -sAbsFOC_QOut;   
+                            if(sAbsFOC_QOutL < 0)
+                                sAbsFOC_QOutL = -sAbsFOC_QOutL;   
 
-                            if( sAbsFOC_QOut <= sFOC_QOutFreeMax)//&& usFOC_DOut == 0)
+                            if( sAbsFOC_QOutL <= sFOC_QOutLFreeMax)//&& usFOC_DOut == 0)
                             {  
                                 nMC_MotorEnableFlag = 0;
                                 vFOC_MotorLock(); 
                                 vBSP_DisableSVPWMOutput();
-                                sFOC_QOut = 0;
+                                sFOC_QOutL = 0;
                                 sFOC_PitchTorqueCmd = 0;
                                 nMC_SpeedPIDInteger = 0;
                             }
                             else
                             {
-                                if(sFOC_QOut < 0) {
-                                    sFOC_QOut++;
+                                if(sFOC_QOutL < 0) {
+                                    sFOC_QOutL++;
                                 }
-                                else if(sFOC_QOut > 0) {
-                                    sFOC_QOut--;
+                                else if(sFOC_QOutL > 0) {
+                                    sFOC_QOutL--;
                                 }
                             
-                                if( sFOC_QOut > 500 )
-                                    sFOC_QOut-=1;
-                                else if( sFOC_QOut < -500)
-                                    sFOC_QOut+=1;
-                                sFOC_PitchTorqueCmd = sFOC_QOut;
+                                if( sFOC_QOutL > 500 )
+                                    sFOC_QOutL-=1;
+                                else if( sFOC_QOutL < -500)
+                                    sFOC_QOutL+=1;
+                                sFOC_PitchTorqueCmd = sFOC_QOutL;
                                 nMC_SpeedPIDInteger = sFOC_PitchTorqueCmd << 16;
                             } 
                         }
@@ -1026,11 +1017,11 @@ void ADC1_2_IRQHandler(void)
                     if( dectime == 0)
                     { 
                         dectime = 4;//60
-                        if(sFOC_QOut < 0) {
-                            sFOC_QOut++;
+                        if(sFOC_QOutL < 0) {
+                            sFOC_QOutL++;
                         }
-                        else if(sFOC_QOut > 0) {
-                            sFOC_QOut--;
+                        else if(sFOC_QOutL > 0) {
+                            sFOC_QOutL--;
                         }
                         else
                         { 
@@ -1049,11 +1040,11 @@ void ADC1_2_IRQHandler(void)
                     else 
                         dectime--;   
                 
-                    if( sFOC_QOut > 500 )
-                        sFOC_QOut-=1;
-                    else if( sFOC_QOut < -500)
-                        sFOC_QOut+=1;
-                    sFOC_PitchTorqueCmd = sFOC_QOut;
+                    if( sFOC_QOutL > 500 )
+                        sFOC_QOutL-=1;
+                    else if( sFOC_QOutL < -500)
+                        sFOC_QOutL+=1;
+                    sFOC_PitchTorqueCmd = sFOC_QOutL;
                     nMC_SpeedPIDInteger = sFOC_PitchTorqueCmd << 16;
                      
                 }
@@ -1063,9 +1054,21 @@ void ADC1_2_IRQHandler(void)
 
             cMC_LastMotorState = cMC_MotorState;
         }
-        //vBSP_SetDACValue(usMC_AngleFb>>4);      //DAC输出角度
+        //vBSP_SetDACValue(usMC_AngleFbL>>4);      //DAC输出角度
         //vBSP_SetKeyLed(DISABLE);
     }
+}
+
+
+///右轴TIM8
+void ADC3_IRQHandler(void)
+{
+    vBSP_SetKeyLed(1); 
+    if( ADC_GetITStatus(ADC3,ADC_IT_JEOC))
+    {
+        ADC_ClearITPendingBit(ADC3,ADC_IT_JEOC);  
+    }
+    vBSP_SetKeyLed(0);
 }
 
 void BusCurrentProc(void)
@@ -1080,10 +1083,10 @@ void BusCurrentProc(void)
     else
     {
         ucOverLoadFlag = 1;
-		if ( sFOC_QOut >= 0 )
-			--sFOC_QOut;// decrease output
+		if ( sFOC_QOutL >= 0 )
+			--sFOC_QOutL;// decrease output
 		else
-			++sFOC_QOut;
+			++sFOC_QOutL;
     }
     
 }

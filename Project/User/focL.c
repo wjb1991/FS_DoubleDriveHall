@@ -1,16 +1,16 @@
-#include "foc.h"
-#include "mc_estHallAngle.h"
+#include "focL.h"
+#include "mc_estHallAngleL.h"
 
-int16_t	sFOC_QOut = 0;
-int16_t	usFOC_DOut = 0;
+int16_t	sFOC_QOutL = 0;
+int16_t	sFOC_DOutL = 0;
 int16_t	usFOC_AlphaOut = 0;     //IQ11? -16~15.99
 int16_t	usFOC_BetaOut = 0;      //IQ11? -16~15.99
 
 
 int16_t	usFOC_PhaseUOffset;
 int16_t	usFOC_PhaseVOffset;
-int16_t	usFOC_CurrV;
-int16_t	usFOC_CurrU;
+int16_t	sFOC_CurrVL;
+int16_t	sFOC_CurrUL;
 int16_t	usFOC_CurrAlpha;
 int16_t	usFOC_CurrBeta;
 int16_t	usFOC_CurrD;
@@ -181,7 +181,7 @@ void vFOC_MotorLock(void)
 {
 	usFOC_DCurrPIDInteger = 0;
 	usFOC_CurrD = 0;
-	usFOC_DOut = 0;
+	sFOC_DOutL = 0;
 	return;
 }
 
@@ -223,7 +223,7 @@ void vFOC_DCurrentControl(void)
 		pidOutLimit = DEF_VDOUT_MAX;
 		usFOC_DCurrPIDInteger = DEF_VDOUT_MAX;
 	}
-	usFOC_DOut = pidOutLimit >> 6;
+	sFOC_DOutL = pidOutLimit >> 6;
 	return;	
 }
 
@@ -235,11 +235,11 @@ void vFOC_DCurrentControl(void)
 */
 void vFOC_Clark(void)
 {
-    //ia = usFOC_CurrU  ib = usFOC_CurrV    1/√3 = 18918  1 = 32767
+    //ia = sFOC_CurrUL  ib = sFOC_CurrVL    1/√3 = 18918  1 = 32767
     //iα = ia
-	usFOC_CurrAlpha = usFOC_CurrU;	
+	usFOC_CurrAlpha = sFOC_CurrUL;	
     //iβ = (ia +2ib)/√3
-	usFOC_CurrBeta = 18918 * ( ((int32_t)usFOC_CurrU) + 2 * ((int32_t) usFOC_CurrV) ) >> 15;
+	usFOC_CurrBeta = 18918 * ( ((int32_t)sFOC_CurrUL) + 2 * ((int32_t) sFOC_CurrVL) ) >> 15;
 	return;
 }
 /**
@@ -268,12 +268,12 @@ void vFOC_Park(void)
 void vFOC_IPark(void) 
 {	
     //用新的角度计算 sinθ cosθ
-	usFOC_Sin = GetSinValue(usMC_AngleFb);
-	usFOC_Cos = GetCosValue(usMC_AngleFb);
+	usFOC_Sin = GetSinValue(usMC_AngleFbL);
+	usFOC_Cos = GetCosValue(usMC_AngleFbL);
 	//Vα = Vd.cosθ - Vq.sinθ
-	usFOC_AlphaOut = (((int32_t)usFOC_DOut) * usFOC_Cos - ((int32_t)sFOC_QOut) * usFOC_Sin) >> 15;
+	usFOC_AlphaOut = (((int32_t)sFOC_DOutL) * usFOC_Cos - ((int32_t)sFOC_QOutL) * usFOC_Sin) >> 15;
 	//Vβ = Vd.sinθ + Vq.cosθ
-    usFOC_BetaOut = (((int32_t)sFOC_QOut) * usFOC_Cos + ((int32_t)usFOC_DOut) * usFOC_Sin) >> 15;
+    usFOC_BetaOut = (((int32_t)sFOC_QOutL) * usFOC_Cos + ((int32_t)sFOC_DOutL) * usFOC_Sin) >> 15;
 	return ;
 }
 

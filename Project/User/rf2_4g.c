@@ -27,19 +27,22 @@ void RF2_4G_Hanlde(uint8_t len , uint8_t* pbuff);
 
 void RF2_4G_Init(void)
 {
-/**
-CS      PB7
-CE      PB6
-MOSI    PB5
-MISO    PB4
-SCLK    PB3
-IRQ     PA15
-*/
+
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB , ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOD, ENABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO , ENABLE);
+    
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);
+/*
+
+//CS      PB7
+//CE      PB6
+//MOSI    PB5
+//MISO    PB4
+//SCLK    PB3
+//IRQ     PA15
+ 
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;               //sk-1s pb2 pbc pb9
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
@@ -53,8 +56,46 @@ IRQ     PA15
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15 ;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;               //开启内部上拉和外部上拉一起
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);        
-    BK2425_Initialize();
+    GPIO_Init(GPIOA, &GPIO_InitStructure);  */      
+    
+    //MOSI 
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 ;              
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);    
+    
+    //SCLK
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;            
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOD, &GPIO_InitStructure);   
+    
+    //CS
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;            
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);  
+    
+    //CE
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;            
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);  
+    
+    //MISO
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3 ;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;               //开启内部上拉和外部上拉一起
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure); 
+    
+    //IRQ
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 ;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;               //开启内部上拉和外部上拉一起
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);   
+    
+    
+    //BK2425_Initialize();
     
     {
         uint8_t Rf_Address[10];

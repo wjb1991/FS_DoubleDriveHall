@@ -29,27 +29,27 @@ __INLINE int16_t sBSP_GetCurrentPhaseV(void)
   * @param  None
   * @retval None
   */
-__INLINE  void vBSP_SetSVPWMDutyPhaseU_Pu(uint16_t usDuty)
+__INLINE  void vBSP_SetSVPWMDutyPhaseU_Pu(TIM_TypeDef* TIMx,uint16_t usDuty)
 { 
-    TIM_SetCompare1(TIM1, usDuty);
+    TIM_SetCompare1(TIMx, usDuty);
 }
 /**
   * @brief  Configures the USART Peripheral.
   * @param  None
   * @retval None
   */
-__INLINE  void vBSP_SetSVPWMDutyPhaseV_Pu(uint16_t usDuty)
+__INLINE  void vBSP_SetSVPWMDutyPhaseV_Pu(TIM_TypeDef* TIMx,uint16_t usDuty)
 { 
-    TIM_SetCompare2(TIM1, usDuty);
+    TIM_SetCompare2(TIMx, usDuty);
 }
 /**
   * @brief  Configures the USART Peripheral.
   * @param  None
   * @retval None
   */
-__INLINE  void vBSP_SetSVPWMDutyPhaseW_Pu(uint16_t usDuty)
+__INLINE  void vBSP_SetSVPWMDutyPhaseW_Pu(TIM_TypeDef* TIMx,uint16_t usDuty)
 { 
-    TIM_SetCompare3(TIM1, usDuty);
+    TIM_SetCompare3(TIMx, usDuty);
 }
 /**
   * @brief  Configures the USART Peripheral.
@@ -59,6 +59,7 @@ __INLINE  void vBSP_SetSVPWMDutyPhaseW_Pu(uint16_t usDuty)
 __INLINE void vBSP_EnableSVPWMOutput(void)
 {
     TIM_CtrlPWMOutputs(TIM1, ENABLE);
+    TIM_CtrlPWMOutputs(TIM8, ENABLE);
 }
 /**
   * @brief  Configures the USART Peripheral.
@@ -68,6 +69,7 @@ __INLINE void vBSP_EnableSVPWMOutput(void)
 __INLINE void vBSP_DisableSVPWMOutput(void)
 {
     TIM_CtrlPWMOutputs(TIM1, DISABLE);
+    TIM_CtrlPWMOutputs(TIM8, DISABLE);
 }
 /**
   * @brief  Configures the USART Peripheral.
