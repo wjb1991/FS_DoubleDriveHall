@@ -116,6 +116,8 @@ int nBSP_USARTConfig(int nBaudRate)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(USARTx_RX_GPIO_PORT, &GPIO_InitStructure);  
 
+    //GPIO_PinRemapConfig(GPIO_PartialRemap_USART3, ENABLE);
+
     /* Enable the USART OverSampling by 8 */
     //USART_OverSampling8Cmd(USARTx, ENABLE);  
 

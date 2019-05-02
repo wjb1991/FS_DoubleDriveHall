@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    Project/STM32F10x_StdPeriph_Template/main.c 
+  * @file    Project/STM32F10x_StdPeriph_tempALte/main.c 
   * @author  MCD Application Team
   * @version V3.5.0
   * @date    08-April-2011
@@ -23,16 +23,17 @@
 #include "bsp.h"
 #include "focL.h"
 #include "mc_estHallAngleL.h"
+#include "mc_estHallAngleR.h"
 #include "rf2_4g.h"
 
 
-/** @addtogroup STM32F10x_StdPeriph_Template
+/** @addtogroup STM32F10x_StdPeriph_tempALte
   * @{
   */
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define DEF_MAX_TOROUE          (1000L)              //ÊúÄÂ§ßÂÄºÊòØ1024
+#define DEF_MAX_TOROUE          (1000L)              //◊Ó¥Û÷µ «1024
 #define DEF_LOW_MAX_SPEED       (900L)
 #define DEF_HIGH_MAX_SPEED      (1800L)
 /* Private macro -------------------------------------------------------------*/
@@ -41,8 +42,10 @@
 typedef enum { eSystemCalibration = -1, eSystemInit = 0, eSystemRun = 1, eSystemErr = 2} systemstate_t;
 
 int16_t sFOC_PitchTorqueCmd = 0;
-int16_t sMC_CurrentPhaseU = 0;
-int16_t sMC_CurrentPhaseV = 0;
+int16_t sMC_CurrentPhaseUL = 0;
+int16_t sMC_CurrentPhaseVL = 0;
+int16_t sMC_CurrentPhaseUR = 0;
+int16_t sMC_CurrentPhaseVR = 0;
 
 int32_t nMC_SpeedPIDInteger = 0;
 int8_t  cMC_MotorState = 0;
@@ -121,7 +124,7 @@ void vBSP_SystemClockConfig(void)
 	RCC_PLLCmd(ENABLE);   
 	while(RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET) ; 
 	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK); 
-	while(RCC_GetSYSCLKSource() != 0x08);
+	while(RCC_GetSYSCLKSource() != 0x08){}
     
     SystemCoreClock = 64000000UL;
 }
@@ -141,28 +144,43 @@ void vBSP_SystemClockOUTConfing(void)
 int32_t vBSP_SVPWM_2ShuntCurrentReadingCalibration1(void)
 {
     uint8_t i;
-    uint32_t tempA = 0;
-    uint32_t tempB = 0;
+    uint32_t tempAL = 0;
+    uint32_t tempBL = 0;
+    uint32_t tempAR = 0;
+    uint32_t tempBR = 0;
     int32_t _BusCurrentOffset = 0;
     for( i = 0 ; i < 32 ; i++ )
     {
         /* Clear the ADC1 JEOC pending flag */
         while(ucSystem1msFlag == 0){}
         ucSystem1msFlag = 0;
-        tempA += sMC_CurrentPhaseU;
-        tempB += sMC_CurrentPhaseV;
-        qVBUS_A_Offset +=  vBSP_GetVBusCurrent_A();//ËÆ°ÁÆóÊØçÁ∫øÁîµÊµÅ
+        tempAL += sMC_CurrentPhaseUL;
+        tempBL += sMC_CurrentPhaseVL;
+        tempAR += sMC_CurrentPhaseUR;
+        tempBR += sMC_CurrentPhaseVR; 
+            
+        qVBUS_A_Offset +=  vBSP_GetVBusCurrent_A();//º∆À„ƒ∏œﬂµÁ¡˜
     }
-    usMC_PhaseAOffset = tempA >> 5;
-    usMC_PhaseBOffset = tempB >> 5;
+    
+    usMC_PhaseAOffsetL = tempAL >> 5;
+    usMC_PhaseBOffsetL = tempBL >> 5;
+    
+    usMC_PhaseAOffsetR = tempAR >> 5;
+    usMC_PhaseBOffsetR = tempBR >> 5;
+    
     qVBUS_A_Offset = _IQdiv32(qVBUS_A_Offset);
-    if( usMC_PhaseAOffset >= 0x900 || usMC_PhaseAOffset < 0x600)
+    
+    if( usMC_PhaseAOffsetL >= 0x900 || usMC_PhaseAOffsetL < 0x600)
         return -1;
     
-    if( usMC_PhaseBOffset >= 0x900 || usMC_PhaseBOffset < 0x600)
+    if( usMC_PhaseBOffsetL >= 0x900 || usMC_PhaseBOffsetL < 0x600)
         return -2; 
 
-
+    if( usMC_PhaseAOffsetR >= 0x900 || usMC_PhaseAOffsetR < 0x600)
+        return -1;
+    
+    if( usMC_PhaseBOffsetR >= 0x900 || usMC_PhaseBOffsetR < 0x600)
+        return -2; 
     
     return 0;
 }
@@ -264,7 +282,7 @@ void AutoPowerOffPoll(void)
     if( unAutoPowerOffTime < 100 * 15 *60 ) //
         unAutoPowerOffTime++;
     else
-        ucPowButtonPowOffEvent = 1;             //ÂèëÈÄÅÂÖ≥Êú∫‰∫ã‰ª∂
+        ucPowButtonPowOffEvent = 1;             //∑¢ÀÕπÿª˙ ¬º˛
 }
 
 void AccelSpeedCtrl(void)
@@ -371,7 +389,7 @@ void Motion(void)
         }
         nMC_SpeedCmd_RPM = 0; 
         
-/** ÁßØÂàÜÊ∏ÖÈô§ */     
+/** ª˝∑÷«Â≥˝ */     
         if( sMC_HallEstSpeed_RPML == 0 )
         {  
             if( nMC_SpeedPIDInteger > (10L<<16))
@@ -388,7 +406,7 @@ void Motion(void)
             }
         }
 
-/*      ÁßØÂàÜÈôêÂà∂    */
+/*      ª˝∑÷œﬁ÷∆    */
          
         if( nMC_SpeedPIDInteger < ((-612)<<16))
         {
@@ -400,7 +418,7 @@ void Motion(void)
             nMC_SpeedPIDInteger = (612<<16);
         }
 
-/**     ÁßØÂàÜÈôêÂà∂    */
+/**     ª˝∑÷œﬁ÷∆    */
         if( sMC_HallEstSpeed_RPML < 100 && sMC_HallEstSpeed_RPML > -100)
         {
             if( ucDirMode )
@@ -420,7 +438,7 @@ void Motion(void)
         }
 
 
-/*      ÁßØÂàÜÊ∏ÖÈô§ÊîæÂèçËΩ¨     
+/*      ª˝∑÷«Â≥˝∑≈∑¥◊™     
         if( ucDirMode )
         {
             if( sMC_HallEstSpeed_RPML <= 0 )
@@ -582,34 +600,34 @@ void SystemErrorCatch(void)
 {
     if (ucComErrState == 0)
     {
-        //0x01ÊéßÂà∂Âá∫ÈîôRËΩ¥ 0x02:Ê∏©Â∫¶65(‰∏ªÊú∫Ê≤°Êúâ)  0x04:Ê∏©Â∫¶75(‰∏ªÊú∫Ê≤°Êúâ) 0x08:ÂèÇÊï∞ÈîôËØØRËΩ¥
-        //0x10ÊéßÂà∂Âá∫ÈîôLËΩ¥ 0x20:Ê∏©Â∫¶65(‰ªéÊú∫ÊâçÊúâ)  0x40:Ê∏©Â∫¶75(‰ªéÊú∫ÊâçÊúâ) 0x80:ÂèÇÊï∞ÈîôËØØLËΩ¥
+        //0x01øÿ÷∆≥ˆ¥ÌR÷· 0x02:Œ¬∂»65(÷˜ª˙√ª”–)  0x04:Œ¬∂»75(÷˜ª˙√ª”–) 0x08:≤Œ ˝¥ÌŒÛR÷·
+        //0x10øÿ÷∆≥ˆ¥ÌL÷· 0x20:Œ¬∂»65(¥”ª˙≤≈”–)  0x40:Œ¬∂»75(¥”ª˙≤≈”–) 0x80:≤Œ ˝¥ÌŒÛL÷·
          
-        //ÁîµÊµÅÂÅèÁΩÆÊ†°Ê≠£ÈîôËØØ ÊïÖÈöú2
+        //µÁ¡˜∆´÷√–£’˝¥ÌŒÛ π ’œ2
         if(ucMC_CalibrationErr)
         {
-            ucComErrState = 0x08;       //Êä•ÂèÇÊï∞ÈîôËØØ
+            ucComErrState = 0x08;       //±®≤Œ ˝¥ÌŒÛ
             ucSystemErrID = 4;
         }
 
-        //ËøáÊµÅÈîôËØØ
+        //π˝¡˜¥ÌŒÛ
         if(ucMC_OverCurrErr)
         {
-            ucComErrState = 0x01;       //Êä•ÊéßÂà∂Âá∫Èîô            
+            ucComErrState = 0x01;       //±®øÿ÷∆≥ˆ¥Ì            
             ucSystemErrID = 1;
         }
 
-        //ÈúçÂ∞îÈîôËØØ ÊïÖÈöú3
+        //ªÙ∂˚¥ÌŒÛ π ’œ3
         if(ucMC_HallSectorErrL)
         {
-            ucComErrState = 0x01;       //Êä•ÊéßÂà∂Âá∫Èîô            
+            ucComErrState = 0x01;       //±®øÿ÷∆≥ˆ¥Ì            
             ucSystemErrID = 2;
         }
 
-        //Ê∏©Â∫¶ÈîôËØØ
+        //Œ¬∂»¥ÌŒÛ
         if(ucMC_TempErr)
         {            
-            ucComErrState = 0x02;       //Êä•Ê∏©Â∫¶ÈîôËØØ
+            ucComErrState = 0x02;       //±®Œ¬∂»¥ÌŒÛ
             ucSystemErrID = 3;
         }
 
@@ -634,24 +652,24 @@ void PowBtnPoll(void)
     
     if( ucPowButtonFristPush == 0)
     {
-        //Á¨¨‰∏ÄÊ¨°Êåâ‰∏ã
+        //µ⁄“ª¥Œ∞¥œ¬
         if( ucBSP_GetPowButtonState() == 1 )
         {
             if( unPowButtonCnt == DEF_POWBUTTON_LONG_PUSH_LIMIT )
-                ucPowButtonLongPushEvent = 1;       //ÂèëÈÄÅÈïøÊåâ‰∫ã‰ª∂
+                ucPowButtonLongPushEvent = 1;       //∑¢ÀÕ≥§∞¥ ¬º˛
         }
         else
         {
             if (unPowButtonCnt < DEF_POWBUTTON_POWON_LIMIT)
             {
-                //ÊåâÁöÑÊó∂Èó¥Â§™Áü≠
-                ucPowButtonPowOffEvent = 1;         //ÂèëÈÄÅÂÖ≥Êú∫‰∫ã‰ª∂
+                //∞¥µƒ ±º‰Ã´∂Ã
+                ucPowButtonPowOffEvent = 1;         //∑¢ÀÕπÿª˙ ¬º˛
             }
             else 
             {
                 unPowButtonCnt = 0;  
                 ucPowButtonFristPush = 1; 
-                ucPowButtonStartEvent = 1;          //ÂèëÈÄÅÂºÄÊú∫‰∫ã‰ª∂          
+                ucPowButtonStartEvent = 1;          //∑¢ÀÕø™ª˙ ¬º˛          
             }
         }   
     }
@@ -660,7 +678,7 @@ void PowBtnPoll(void)
         if( ucBSP_GetPowButtonState() == 1 )
         {
             if( unPowButtonCnt == DEF_POWBUTTON_POWOFF_LIMIT )
-                ucPowButtonPowOffEvent = 1;         //ÂèëÈÄÅÂÖ≥Êú∫‰∫ã‰ª∂
+                ucPowButtonPowOffEvent = 1;         //∑¢ÀÕπÿª˙ ¬º˛
         }
         else
         {
@@ -675,24 +693,24 @@ void SystemEventHandler(void)
     if( ucPowButtonPowOffEvent )
     {        
         ucPowButtonPowOffEvent = 0;
-        //ÊåâÈîÆÂÖ≥Êú∫‰∫ã‰ª∂
-        vBSP_SetKeyLed(DISABLE);        //ÂÖ≥Èó≠LED
-        vBSP_DisableSVPWMOutput();      //ÂÖ≥SVPWM        
+        //∞¥º¸πÿª˙ ¬º˛
+        vBSP_SetKeyLed(DISABLE);        //πÿ±’LED
+        vBSP_DisableSVPWMOutput();      //πÿSVPWM        
 
         while(ucBSP_GetPowButtonState() == 1)
         {
-            //Á≠âÂæÖÊåâÈîÆÂºπËµ∑
+            //µ»¥˝∞¥º¸µØ∆
         }
-        vBSP_SetPowerCrtl(DISABLE);     //ÂÖ≥MOSÁÆ°
-        while(1){}  //Ê≠ªÂæ™ÁéØÁõ¥Âà∞ÂÖ≥Êú∫
+        vBSP_SetPowerCrtl(DISABLE);     //πÿMOSπ‹
+        while(1){}  //À¿—≠ª∑÷±µΩπÿª˙
     }
 
     if( ucPowButtonLongPushEvent )
     {
         ucPowButtonLongPushEvent = 0;
-        //ÊåâÈîÆÈïøÊåâ‰∫ã‰ª∂
+        //∞¥º¸≥§∞¥ ¬º˛
         ucSystemState = eSystemCalibration;  
-        RF2_4G_StartCalibration();      //ÂºÄÂêØÈÖçÂØπ
+        RF2_4G_StartCalibration();      //ø™∆Ù≈‰∂‘
     }
     
     if( ucSystemCalibrationFinishEvent )
@@ -742,32 +760,36 @@ int main(void)
     RF2_4G_Init();
   
 
-    //nBSP_USARTConfig(115200UL);
+    nBSP_USARTConfig(115200UL);
     nBSP_SVPWM2ShuntInit(32000UL);
 //    //vBSP_DACConfig();  
     vBSP_KeyConfig();
    
     vBSP_HALLInit();
 
-    vBSP_SetSVPWMDutyPhaseU_Pu(DEF_MOTOR_L,100);    //512‰∏äÈôê
-    vBSP_SetSVPWMDutyPhaseV_Pu(DEF_MOTOR_L,100);    //512‰∏äÈôê
-    vBSP_SetSVPWMDutyPhaseW_Pu(DEF_MOTOR_L,100);    //512‰∏äÈôê
+    vBSP_SetSVPWMDutyPhaseU_Pu(DEF_MOTOR_L,100);    //512…œœﬁ
+    vBSP_SetSVPWMDutyPhaseV_Pu(DEF_MOTOR_L,100);    //512…œœﬁ
+    vBSP_SetSVPWMDutyPhaseW_Pu(DEF_MOTOR_L,100);    //512…œœﬁ
     
-    vBSP_SetSVPWMDutyPhaseU_Pu(DEF_MOTOR_R,100);    //512‰∏äÈôê
-    vBSP_SetSVPWMDutyPhaseV_Pu(DEF_MOTOR_R,100);    //512‰∏äÈôê
-    vBSP_SetSVPWMDutyPhaseW_Pu(DEF_MOTOR_R,100);    //512‰∏äÈôê
+    vBSP_SetSVPWMDutyPhaseU_Pu(DEF_MOTOR_R,100);    //512…œœﬁ
+    vBSP_SetSVPWMDutyPhaseV_Pu(DEF_MOTOR_R,100);    //512…œœﬁ
+    vBSP_SetSVPWMDutyPhaseW_Pu(DEF_MOTOR_R,100);    //512…œœﬁ
     
     vBSP_SetKeyLed(0);
     vBSP_SetKeyLed(1);
     
+    TRAG_DBG("ø™∆ÙPWM ªÒ»°‘À∑≈∆´÷√\r\n");
     vBSP_EnableSVPWMOutput();
     if(vBSP_SVPWM_2ShuntCurrentReadingCalibration1() != 0)
     {
         ucMC_CalibrationErr = 1;
     }
-    while(1);
+
+    vBSP_DisableSVPWMOutput();    
+    TRAG_DBG("πÿ±’PWM ‘À∑≈∆´÷√ªÒ»°ÕÍ≥…\r\n");
+    TRAG_DBG("PhaseAOffset = 0x%04x\r\n",usMC_PhaseAOffsetL);
+    TRAG_DBG("PhaseBOffset = 0x%04x\r\n",usMC_PhaseBOffsetL);
     
-    vBSP_DisableSVPWMOutput();
     /* Infinite loop */
     usMC_HallEva_IntervalTimeL = 16872;
     sMC_HallEstSpeed_RPML = 0;
@@ -777,20 +799,20 @@ int main(void)
     {
         RF2_4G_Poll();
         
-        //1msÁöÑÊó∂Èó¥Áâá
+        //1msµƒ ±º‰∆¨
         if(ucSystem1msFlag)
         {
             ucSystem1msFlag = 0;
             
-            //ÊåâÈîÆÂ§ÑÁêÜ
+            //∞¥º¸¥¶¿Ì
             PowBtnPoll();
             
-            //Á≥ªÁªü‰∫ã‰ª∂Â§ÑÁêÜ
+            //œµÕ≥ ¬º˛¥¶¿Ì
             SystemEventHandler();
             
             if(ucSystemState == eSystemInit)
             {
-                //ÂàùÂßãÂåñÁä∂ÊÄÅ
+                //≥ı ºªØ◊¥Ã¨
                 vBSP_SetKeyLed(ENABLE);
             }
             else if( ucSystemState == eSystemCalibration )
@@ -799,15 +821,15 @@ int main(void)
             }
             else if( ucSystemState == eSystemRun )
             {
-                //Â∑•‰ΩúÁä∂ÊÄÅ
+                //π§◊˜◊¥Ã¨
                 
-                //ÁîµÊú∫ÂßøÊÄÅÊéßÂà∂
+                //µÁª˙◊ÀÃ¨øÿ÷∆
                 Motion();   
                 SystemErrorCatch();
             }
             else if( ucSystemState == eSystemErr )
             {
-                //ÈîôËØØÁä∂ÊÄÅ
+                //¥ÌŒÛ◊¥Ã¨
                 
             }
             
@@ -815,7 +837,7 @@ int main(void)
             BusCurrentProc();
         }
         
-        //10msÁöÑÊó∂Èó¥Áâá   
+        //10msµƒ ±º‰∆¨   
         if(ucSystem10msFlag)
         {
             ucSystem10msFlag = 0;
@@ -824,14 +846,26 @@ int main(void)
 
             AutoPowerOffPoll();
         }
-           
-           
-       //‰∏≤Âè£Áåé‰∫∫ÁöÑ‰∏≤Âè£Á§∫Ê≥¢Âô®Ë∞ÉËØï
+       //¥Æø⁄¡‘»Àµƒ¥Æø⁄ æ≤®∆˜µ˜ ‘
        //serialPortHunterDebugLog();
     }
 }
 
-///Â∑¶ËΩ¥TIM1
+///◊Û÷·TIM1
+void ADC1_2_IRQHandler1(void)
+{
+    if( ADC_GetITStatus(ADC1,ADC_IT_JEOC))
+    {
+        ADC_ClearITPendingBit(ADC1,ADC_IT_JEOC);  
+    }
+    
+    if( ADC_GetITStatus(ADC2,ADC_IT_JEOC))
+    {
+        ADC_ClearITPendingBit(ADC2,ADC_IT_JEOC);    
+        vMC_EST_HallAngleL();  
+    }     
+}
+
 void ADC1_2_IRQHandler(void)
 {
     if( ADC_GetITStatus(ADC1,ADC_IT_JEOC))
@@ -843,15 +877,15 @@ void ADC1_2_IRQHandler(void)
     {
         ADC_ClearITPendingBit(ADC2,ADC_IT_JEOC);    
 
-        //Ëé∑ÂèñÁõ∏ÁîµÊµÅ
-        //sk-1s ADCÂ¢ûÂä†43.6906666666 ÁîµÊµÅÂ¢ûÂä†1A
-        sMC_CurrentPhaseU = sBSP_GetCurrentPhaseU();    //a14   ËìùÁ∫ø
-        sMC_CurrentPhaseV = sBSP_GetCurrentPhaseV();    //a15   ÈªÑÁ∫ø
+        //ªÒ»°œ‡µÁ¡˜
+        //sk-1s ADC‘ˆº”43.6906666666 µÁ¡˜‘ˆº”1A
+        sMC_CurrentPhaseUL = sBSP_GetCurrentPhaseUL();    //a14   ¿∂œﬂ
+        sMC_CurrentPhaseVL = sBSP_GetCurrentPhaseVL();    //a15   ª∆œﬂ
         if(nMC_InitFinished)
         {
 
-            sFOC_CurrUL = -(usMC_PhaseAOffset - sMC_CurrentPhaseU) - (usMC_PhaseBOffset - sMC_CurrentPhaseV);               //ÁªøÁ∫ø
-            sFOC_CurrVL = usMC_PhaseAOffset - sMC_CurrentPhaseU;                                    //ËìùÁ∫ø
+            sFOC_CurrUL = -(usMC_PhaseAOffsetL - sMC_CurrentPhaseUL) - (usMC_PhaseBOffsetL - sMC_CurrentPhaseVL);               //¬Ãœﬂ
+            sFOC_CurrVL = usMC_PhaseAOffsetL - sMC_CurrentPhaseUL;                                    //¿∂œﬂ
 
             
             vMC_EST_HallAngleL();      
@@ -875,16 +909,16 @@ void ADC1_2_IRQHandler(void)
 
             if ( ucMC_HallEva_LowSpeedorEdgedL )
             {
-                //‰ΩéÈÄü‰∏çË∞ÉÊï¥ID
+                //µÕÀŸ≤ªµ˜’˚ID
                 vFOC_MotorLock();
             }		
             else		
             {			
-                if (( sMC_CurrentPhaseU < 3848 ) && ( sMC_CurrentPhaseV < 3848 ))
+                if (( sMC_CurrentPhaseUL < 3848 ) && ( sMC_CurrentPhaseVL < 3848 ))
                 {
-                    vFOC_Clark();  //ClarkÂèòÊç¢
-                    vFOC_Park();   //ParkÂèòÊç¢
-                    vFOC_DCurrentControl();    //IdÊéßÂà∂
+                    vFOC_Clark();  //Clark±‰ªª
+                    vFOC_Park();   //Park±‰ªª
+                    vFOC_DCurrentControl();    //Idøÿ÷∆
                 }
             }
             vFOC_IPark();
@@ -892,8 +926,8 @@ void ADC1_2_IRQHandler(void)
                 vFOC_SVPWM();
             
             
-            //‰∏∫‰∫ÜËÆ°ÁÆóÂÆåSVPWMÊúÄÂêéÊâçÂºÄÂêØSVPWMOUT
-            //Èò≤Ê≠¢Âú®ÂºÄÂêØÁöÑÊó∂ÂÄôÁî®‰∏äÊ¨°ÁöÑÂç†ÊØî‰æãÂºÄÂêØ
+            //Œ™¡Àº∆À„ÕÍSVPWM◊Ó∫Û≤≈ø™∆ÙSVPWMOUT
+            //∑¿÷π‘⁄ø™∆Ùµƒ ±∫Ú”√…œ¥Œµƒ’º±»¿˝ø™∆Ù
 #if 1
             {
                 static int32_t dectime = 0;
@@ -1046,27 +1080,32 @@ void ADC1_2_IRQHandler(void)
                         sFOC_QOutL+=1;
                     sFOC_PitchTorqueCmd = sFOC_QOutL;
                     nMC_SpeedPIDInteger = sFOC_PitchTorqueCmd << 16;
-                     
                 }
-           
             }
 #endif 
 
             cMC_LastMotorState = cMC_MotorState;
         }
-        //vBSP_SetDACValue(usMC_AngleFbL>>4);      //DACËæìÂá∫ËßíÂ∫¶
+        //vBSP_SetDACValue(usMC_AngleFbL>>4);      //DAC ‰≥ˆΩ«∂»
         //vBSP_SetKeyLed(DISABLE);
     }
 }
 
 
-///Âè≥ËΩ¥TIM8
+///”“÷·TIM8
 void ADC3_IRQHandler(void)
 {
     vBSP_SetKeyLed(1); 
     if( ADC_GetITStatus(ADC3,ADC_IT_JEOC))
     {
         ADC_ClearITPendingBit(ADC3,ADC_IT_JEOC);  
+
+        sMC_CurrentPhaseUR = sBSP_GetCurrentPhaseUR();    //a14   ¿∂œﬂ
+        sMC_CurrentPhaseVR = sBSP_GetCurrentPhaseVR();    //a15   ª∆œﬂ
+        if(nMC_InitFinished)
+        {
+            vMC_EST_HallAngleR();
+        }    
     }
     vBSP_SetKeyLed(0);
 }

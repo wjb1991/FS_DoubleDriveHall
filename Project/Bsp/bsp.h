@@ -37,4 +37,6 @@ p   指针
 #include "bsp_key.h"
 #include "bsp_cpu_flash.h"
 
+#define   Bsp_Printf    printf
+#define   TRAG_DBG      printf
 #endif

@@ -6,10 +6,12 @@
 #define ADC_SampleTime_XCycles5 ADC_SampleTime_7Cycles5        
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-__IO uint32_t ADC_RegularConvertedValueTab[32];
+__IO uint16_t ADC_RegularConvertedValueTab[30];
 
-uint16_t usMC_PhaseAOffset = 0;
-uint16_t usMC_PhaseBOffset = 0;
+uint16_t usMC_PhaseAOffsetL = 0;
+uint16_t usMC_PhaseBOffsetL = 0;
+uint16_t usMC_PhaseAOffsetR = 0;
+uint16_t usMC_PhaseBOffsetR = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 void vRCC_Configuration(void);
@@ -65,10 +67,12 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     TIM_DeInit(TIM1);
     TIM_DeInit(TIM8);
 		
+    /* 最终频率的确认 72000000/(TIM_Prescaler+1)/(TIM_ClockDivision+1)/(TIM_Period+TIM_DeadTime)*/
+        
     /* Time Base configuration */
     TIM_TimeBaseStructure.TIM_Prescaler = 3;                                        //设置预分频值
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_CenterAligned1;
-    TIM_TimeBaseStructure.TIM_Period = 0x1FF;//(SystemCoreClock / nFrequency) - 1;          //设置在自动重装载周期值,
+    TIM_TimeBaseStructure.TIM_Period = 0x1FF;//(SystemCoreClock / nFrequency) - 1;  d//设置在自动重装载周期值,
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;                         //设置时钟分割:TDTS = Tck_tim，// 采样分频
     TIM_TimeBaseStructure.TIM_RepetitionCounter = 1;                                //重复寄存器，用于自动更新pwm占空比
 
@@ -144,7 +148,7 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     DMA_InitStructure.DMA_PeripheralBaseAddr = ADC1_DR_Address;
     DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)ADC_RegularConvertedValueTab;
     DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
-    DMA_InitStructure.DMA_BufferSize = 32;
+    DMA_InitStructure.DMA_BufferSize = 30;
     DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
     DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
     DMA_InitStructure.DMA_PeripheralDataSize = DMA_MemoryDataSize_HalfWord;
@@ -165,7 +169,7 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
     ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None; //ADC_ExternalTrigConv_None
     ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-    ADC_InitStructure.ADC_NbrOfChannel = 2;                             //规则通道数量
+    ADC_InitStructure.ADC_NbrOfChannel = 5;                             //规则通道数量
     ADC_Init(ADC1, &ADC_InitStructure);
     
     
@@ -191,32 +195,41 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     //page157 温度传感器和VREFINT只能出现在主ADC1中
     //==============ADC1规则通道配置==============//
     /* ADC1 regular channel14 configuration */ 
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 1, ADC_SampleTime_239Cycles5);    	//PA2 温度传感器  on chip temp ADC_Channel_16
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 2, ADC_SampleTime_239Cycles5);    	//PA2 温度传感器  on chip temp ADC_Channel_16
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 3, ADC_SampleTime_239Cycles5);    	//PA7 母线电流    Vrefin ADC_Channel_17
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 4, ADC_SampleTime_239Cycles5);     	//PA0 IN0充电端口 
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 5, ADC_SampleTime_239Cycles5);     	//PA1 IN1母线电压
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_TempSensor,  1, ADC_SampleTime_239Cycles5);    
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint,     2, ADC_SampleTime_239Cycles5);    	
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_10,          3, ADC_SampleTime_239Cycles5);    	//PC0 母线电压
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_0,           4, ADC_SampleTime_239Cycles5);     	//PA0 左轴母线
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_4,           5, ADC_SampleTime_239Cycles5);     	//PA4 右轴母线
     
+    //==============ADC1注入通道配置==============//
+    /* Set injected sequencer length */
+    ADC_InjectedSequencerLengthConfig(ADC1, 0);                                                 //注入通道数量    
+    /* ADC1 injected external trigger configuration */
+    ADC_ExternalTrigInjectedConvConfig(ADC1, ADC_ExternalTrigInjecConv_T1_TRGO);                 //从ADC模块用软件触发
     
     //==============ADC2注入通道配置==============//
     /* Set injected sequencer length */
-    ADC_InjectedSequencerLengthConfig(ADC2, 1);                         //注入通道数量    
+    ADC_InjectedSequencerLengthConfig(ADC2, 3);                                                 //注入通道数量    
     /* ADC1 injected channel Configuration */ 
-    ADC_InjectedChannelConfig(ADC2, ADC_Channel_8, 1, ADC_SampleTime_XCycles5);    //PB1 IN9绿
+    ADC_InjectedChannelConfig(ADC2, ADC_Channel_2,          1, ADC_SampleTime_XCycles5);        //PA2
+    ADC_InjectedChannelConfig(ADC2, ADC_Channel_13,         2, ADC_SampleTime_XCycles5);        //PC3
+    ADC_InjectedChannelConfig(ADC2, ADC_Channel_1,          3, ADC_SampleTime_XCycles5);        //PA1
     /* ADC1 injected external trigger configuration */
-    ADC_ExternalTrigInjectedConvConfig(ADC2, ADC_ExternalTrigInjecConv_T1_CC4);       //从ADC模块用软件触发
+    ADC_ExternalTrigInjectedConvConfig(ADC2, ADC_ExternalTrigInjecConv_None);                 //从ADC模块用软件触发
     
     //==============ADC3注入通道配置==============//
     /* Set injected sequencer length */
-    ADC_InjectedSequencerLengthConfig(ADC3, 1);                                     //注入通道数量    
+    ADC_InjectedSequencerLengthConfig(ADC3, 3);                                                 //注入通道数量    
     /* ADC1 injected channel Configuration */ 
-    ADC_InjectedChannelConfig(ADC3, ADC_Channel_9, 1, ADC_SampleTime_XCycles5);     //PB1 IN9绿
+    ADC_InjectedChannelConfig(ADC3, ADC_Channel_12,         1, ADC_SampleTime_XCycles5);        //PC2
+    ADC_InjectedChannelConfig(ADC3, ADC_Channel_3,          2, ADC_SampleTime_XCycles5);        //PA3
+    ADC_InjectedChannelConfig(ADC3, ADC_Channel_11,         3, ADC_SampleTime_XCycles5);        //PC1 IN9绿
     /* ADC1 injected external trigger configuration */
-    ADC_ExternalTrigInjectedConvConfig(ADC3, ADC_ExternalTrigInjecConv_T1_CC4);       //从ADC模块用软件触发
+    ADC_ExternalTrigInjectedConvConfig(ADC3, ADC_ExternalTrigInjecConv_T1_TRGO);                 //从ADC模块用软件触发
     
     
     /* Enable automatic injected conversion start after regular one */
-    //ADC_AutoInjectedConvCmd(ADC1, ENABLE);                            //自动注入 软件触发也算注入了
+    //ADC_AutoInjectedConvCmd(ADC1, ENABLE);                                                    //自动注入 软件触发也算注入了
 
     /* Enable ADC1 DMA */
     ADC_DMACmd(ADC1, ENABLE);
@@ -346,6 +359,7 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
 
 void vBSP_SVPWM_2ShuntCurrentReadingCalibration(void)
 {
+#if 0
     uint8_t i ;
     //==============ADC1注入中断关闭==============//
     ADC_ITConfig(ADC1, ADC_IT_JEOC, DISABLE);
@@ -375,12 +389,12 @@ void vBSP_SVPWM_2ShuntCurrentReadingCalibration(void)
 
         while(!ADC_GetFlagStatus(ADC1,ADC_FLAG_JEOC)) { } 
         vBSP_DelayMS(1);
-        usMC_PhaseAOffset += (ADC_GetInjectedConversionValue(ADC1,ADC_InjectedChannel_1));
-        usMC_PhaseBOffset += (ADC_GetInjectedConversionValue(ADC2,ADC_InjectedChannel_1));
+        usMC_PhaseAOffsetL += (ADC_GetInjectedConversionValue(ADC1,ADC_InjectedChannel_1));
+        usMC_PhaseBOffsetL += (ADC_GetInjectedConversionValue(ADC2,ADC_InjectedChannel_1));
             
     }
-    usMC_PhaseAOffset>>=4;
-    usMC_PhaseBOffset>>=4;
+    usMC_PhaseAOffsetL>>=4;
+    usMC_PhaseBOffsetL>>=4;
     
     //==============ADC1注入通道配置==============//
     /* Set injected sequencer length */
@@ -401,6 +415,7 @@ void vBSP_SVPWM_2ShuntCurrentReadingCalibration(void)
     
     ADC_ITConfig(ADC1, ADC_IT_JEOC, ENABLE);
     ADC_ClearFlag(ADC1, ADC_FLAG_JEOC);  
+#endif
 }
 
 
@@ -441,15 +456,12 @@ void vRCC_Configuration(void)
 void vGPIO_Configuration(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure; 
-    
-	
-		//PC0 POWAD 	PC1 IWR 		PC2 IUR 		PC3 IVR
-		//PA1	IWL			PA2	IUL			PA3	IVL			PA12 CharAd
+
     //配置ADC引脚
     /* Configure PC.01, PC.02 and PC.04 (ADC Channel11, Channel12 and Channel14)
     as analog input ----------------------------------------------------------*/
     //
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_12;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 

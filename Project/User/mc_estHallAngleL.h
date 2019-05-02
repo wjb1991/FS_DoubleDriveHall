@@ -1,5 +1,5 @@
-#ifndef __MC_EST_HALL_H__
-#define __MC_EST_HALL_H__
+#ifndef __MC_EST_HALLL_H__
+#define __MC_EST_HALLL_H__
 #include "bsp.h"
 
 extern uint16_t usMC_AngleFbL;

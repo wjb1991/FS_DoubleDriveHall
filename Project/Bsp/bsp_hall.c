@@ -29,10 +29,16 @@ void vBSP_HALLInit(void)
   * @param  None
   * @retval None
   */
-uint8_t ucBSP_ReadHall(void)
+uint8_t ucBSP_ReadHallL(void)
 {
-    return (GPIO_ReadInputData(GPIOC)>>13&0x07);
+    return (GPIO_ReadInputData(GPIOC)>>10&0x07);
 }
+
+uint8_t ucBSP_ReadHallR(void)
+{
+    return (GPIO_ReadInputData(GPIOB)>>5&0x07);
+}
+
 
 /**
   * @brief  Configures the different GPIO ports.

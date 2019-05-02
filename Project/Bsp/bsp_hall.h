@@ -13,6 +13,8 @@ void vBSP_HALLInit(void);
   * @param  None
   * @retval None
   */
-uint8_t ucBSP_ReadHall(void);
+uint8_t ucBSP_ReadHallL(void);
+
+uint8_t ucBSP_ReadHallR(void);
 
 #endif

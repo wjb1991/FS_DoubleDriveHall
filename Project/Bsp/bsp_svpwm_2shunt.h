@@ -2,28 +2,54 @@
 #define __BSP_SVPWM_2SHUNT_H__
 
 #include "bsp.h"
-extern uint16_t usMC_PhaseAOffset;
-extern uint16_t usMC_PhaseBOffset;
+
+extern uint16_t usMC_PhaseAOffsetL;
+extern uint16_t usMC_PhaseBOffsetL;
+extern uint16_t usMC_PhaseAOffsetR;
+extern uint16_t usMC_PhaseBOffsetR;
 
 void vBSP_SVPWM_2ShuntCurrentReadingCalibration(void);
+
+
 /**
-  * @brief  Configures the USART Peripheral.
+  * @brief  sBSP_GetCurrentPhaseUL
   * @param  None
   * @retval None
   */
-__INLINE int16_t sBSP_GetCurrentPhaseU(void)
-{
-    return(ADC_GetInjectedConversionValue(ADC1,ADC_InjectedChannel_1));
-}
-/**
-  * @brief  Configures the USART Peripheral.
-  * @param  None
-  * @retval None
-  */
-__INLINE int16_t sBSP_GetCurrentPhaseV(void)
+__INLINE int16_t sBSP_GetCurrentPhaseUL(void)
 {
     return(ADC_GetInjectedConversionValue(ADC2,ADC_InjectedChannel_1));
 }
+/**
+  * @brief  sBSP_GetCurrentPhaseVR
+  * @param  None
+  * @retval None
+  */
+__INLINE int16_t sBSP_GetCurrentPhaseVL(void)
+{
+    return(ADC_GetInjectedConversionValue(ADC2,ADC_InjectedChannel_2));
+}
+
+/**
+  * @brief  Configures the USART Peripheral.
+  * @param  None
+  * @retval None
+  */
+__INLINE int16_t sBSP_GetCurrentPhaseUR(void)
+{
+    return(ADC_GetInjectedConversionValue(ADC3,ADC_InjectedChannel_1));
+}
+/**
+  * @brief  Configures the USART Peripheral.
+  * @param  None
+  * @retval None
+  */
+__INLINE int16_t sBSP_GetCurrentPhaseVR(void)
+{
+    return(ADC_GetInjectedConversionValue(ADC3,ADC_InjectedChannel_2));
+}
+
+
 /**
   * @brief  Configures the USART Peripheral.
   * @param  None

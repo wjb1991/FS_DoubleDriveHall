@@ -388,14 +388,29 @@
               <FilePath>..\User\main.c</FilePath>
             </File>
             <File>
+              <FileName>rf2_4g.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\rf2_4g.c</FilePath>
+            </File>
+            <File>
+              <FileName>focL.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\focL.c</FilePath>
+            </File>
+            <File>
+              <FileName>mc_estHallAngleL.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\mc_estHallAngleL.c</FilePath>
+            </File>
+            <File>
               <FileName>stm32f10x_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\stm32f10x_it.c</FilePath>
             </File>
             <File>
-              <FileName>rf2_4g.c</FileName>
+              <FileName>mc_estHallAngleR.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\rf2_4g.c</FilePath>
+              <FilePath>..\User\mc_estHallAngleR.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -451,21 +466,6 @@
               <FileName>bsp_cpu_flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Bsp\bsp_cpu_flash.c</FilePath>
-            </File>
-            <File>
-              <FileName>mc_estHallAngleL.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\mc_estHallAngleL.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>focL.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\focL.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1053,14 +1053,29 @@
               <FilePath>..\User\main.c</FilePath>
             </File>
             <File>
+              <FileName>rf2_4g.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\rf2_4g.c</FilePath>
+            </File>
+            <File>
+              <FileName>focL.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\focL.c</FilePath>
+            </File>
+            <File>
+              <FileName>mc_estHallAngleL.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\mc_estHallAngleL.c</FilePath>
+            </File>
+            <File>
               <FileName>stm32f10x_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\stm32f10x_it.c</FilePath>
             </File>
             <File>
-              <FileName>rf2_4g.c</FileName>
+              <FileName>mc_estHallAngleR.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\rf2_4g.c</FilePath>
+              <FilePath>..\User\mc_estHallAngleR.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1116,21 +1131,6 @@
               <FileName>bsp_cpu_flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Bsp\bsp_cpu_flash.c</FilePath>
-            </File>
-            <File>
-              <FileName>mc_estHallAngleL.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\mc_estHallAngleL.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>focL.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\focL.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -2022,14 +2022,29 @@
               <FilePath>..\User\main.c</FilePath>
             </File>
             <File>
+              <FileName>rf2_4g.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\rf2_4g.c</FilePath>
+            </File>
+            <File>
+              <FileName>focL.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\focL.c</FilePath>
+            </File>
+            <File>
+              <FileName>mc_estHallAngleL.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\mc_estHallAngleL.c</FilePath>
+            </File>
+            <File>
               <FileName>stm32f10x_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\stm32f10x_it.c</FilePath>
             </File>
             <File>
-              <FileName>rf2_4g.c</FileName>
+              <FileName>mc_estHallAngleR.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\rf2_4g.c</FilePath>
+              <FilePath>..\User\mc_estHallAngleR.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -2085,21 +2100,6 @@
               <FileName>bsp_cpu_flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Bsp\bsp_cpu_flash.c</FilePath>
-            </File>
-            <File>
-              <FileName>mc_estHallAngleL.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\mc_estHallAngleL.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>focL.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\focL.c</FilePath>
             </File>
           </Files>
         </Group>

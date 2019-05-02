@@ -1,4 +1,4 @@
-#include "mc_estHallAngleL.h"
+#include "mc_estHallAngleR.h"
 
 // 0 2 4 3 6 1 5    sec
 // 0 1 2 3 4 5 6    hall 
@@ -42,13 +42,13 @@ static uint16_t usMC_HallEva_AngleLimit = 0;                        //当前扇�
 
 static uint8_t  ucMC_HallEva_LowSpeedFlag = 0;                       //低速标记
 static uint16_t usMC_HallEva_Interpolation = 0;                      //估算时的插入角
-static uint16_t usMC_HallEva_IntervalTimeLLast = 0;                  //上一次电周期的时间
+static uint16_t usMC_HallEva_IntervalTimeRLast = 0;                  //上一次电周期的时间
 
-uint16_t usMC_AngleFbL = 0;
-int16_t  sMC_HallEstSpeed_RPML = 0;
-uint8_t  ucMC_HallEva_LowSpeedorEdgedL = 0;
-uint8_t  ucMC_HallSectorErrL = 0;                             //霍尔扇区错误标记
-int16_t  usMC_HallEva_IntervalTimeL = 16872;                  //一个电角度的时间 
+uint16_t usMC_AngleFbR = 0;
+int16_t  sMC_HallEstSpeed_RPMR = 0;
+uint8_t  ucMC_HallEva_LowSpeedorEdgedR = 0;
+uint8_t  ucMC_HallSectorErrR = 0;                             //霍尔扇区错误标记
+int16_t  usMC_HallEva_IntervalTimeR = 16872;                  //一个电角度的时间 
 
 
 // 40 20 20 还可以
@@ -62,7 +62,7 @@ int16_t  usMC_HallEva_IntervalTimeL = 16872;                  //一个电角度�
 #define     DEF_HIGHSPEED_CHANGE_FREQUENCY          (60*16000/10/(DEF_HIGHSPEED_CHANGE_SPEED_RPM))     //1350
        
 //获取角度估算角度模块
-void vMC_EST_HallAngleL(void)
+void vMC_EST_HallAngleR(void)
 {
     /**
     电机停止or超低速检测
@@ -73,7 +73,7 @@ void vMC_EST_HallAngleL(void)
     }
     if ( usMC_HallTick >= 2812 )   // long time without edge of hall -->  reset    长时间没有霍尔边沿
     {
-        usMC_HallEva_IntervalTimeL = 16872;
+        usMC_HallEva_IntervalTimeR = 16872;
         ucMC_HallEva_DirChangedFlag = 0;
         ucMC_HallEva_OneRoundFlag = 0;
         ucMC_HallEva_EdgeTickDir = 0;
@@ -81,7 +81,7 @@ void vMC_EST_HallAngleL(void)
     /**
     电机低速检测
     */
-    if ( (usMC_HallEva_IntervalTimeL > DEF_ANGLE_LIMIT_SPEED_FREQUENCY)         // 电周期时间 > 1012 *64us = 12.954ms
+    if ( (usMC_HallEva_IntervalTimeR > DEF_ANGLE_LIMIT_SPEED_FREQUENCY)         // 电周期时间 > 1012 *64us = 12.954ms
         || (5 * usMC_HallTick > (DEF_ANGLE_LIMIT_SPEED_FREQUENCY - 1)))        // (1/(6*15)) *60 / 12.954ms   = 51 rpm  
     {
         // long time?  adjust the limit angle   时间太长 转速太低 小于51rpm 调整限制角度
@@ -92,18 +92,18 @@ void vMC_EST_HallAngleL(void)
     /**
     
     */
-    if ( (usMC_HallEva_IntervalTimeL <= DEF_HIGHSPEED_CHANGE_FREQUENCY) && (6 * usMC_HallTick <= DEF_HIGHSPEED_CHANGE_FREQUENCY) ) // 225*64us = 14.4ms  (1/(6*15)) *60 / 14.4ms   = 46 rpm   
+    if ( (usMC_HallEva_IntervalTimeR <= DEF_HIGHSPEED_CHANGE_FREQUENCY) && (6 * usMC_HallTick <= DEF_HIGHSPEED_CHANGE_FREQUENCY) ) // 225*64us = 14.4ms  (1/(6*15)) *60 / 14.4ms   = 46 rpm   
     {
         //loc_8003244 时间小于 1350  转速大于 46rpm 
         if ( ucMC_HallEva_EdgeTick >= 6 )                       //连续6次大于46rpm
         {   // speed enough
-            ucMC_HallEva_LowSpeedorEdgedL = 0; 
+            ucMC_HallEva_LowSpeedorEdgedR = 0; 
             ucMC_HallEva_LowSpeedFlag = 0;        //清除低速标记
         }
     } 
-    else if ( (usMC_HallEva_IntervalTimeL >= (DEF_LOWSPEED_CHANGE_FREQUENCY)) && (6 * usMC_HallTick >= (DEF_LOWSPEED_CHANGE_FREQUENCY)) )
+    else if ( (usMC_HallEva_IntervalTimeR >= (DEF_LOWSPEED_CHANGE_FREQUENCY)) && (6 * usMC_HallTick >= (DEF_LOWSPEED_CHANGE_FREQUENCY)) )
     {
-        ucMC_HallEva_LowSpeedorEdgedL = 1;                       //设置低速标记
+        ucMC_HallEva_LowSpeedorEdgedR = 1;                       //设置低速标记
         ucMC_HallEva_EdgeTick = 0;                              //连续次数清0
     }
 
@@ -234,7 +234,7 @@ void vMC_EST_HallAngleL(void)
     /**
     霍尔信号读取
     */
-    ucMC_HallValue = ucBSP_ReadHallL();                      //读取霍尔 
+    ucMC_HallValue = ucBSP_ReadHallR();                      //读取霍尔 
 
 
     if(ucMC_HallValue == 7 || ucMC_HallValue == 0)          //全0 全1 hall出错
@@ -282,7 +282,7 @@ void vMC_EST_HallAngleL(void)
         if ( ucMC_HallEva_DirectionLast != ucMC_HallEva_Direction )    
         {
             // reset 重置变量
-            usMC_HallEva_IntervalTimeL = 16872;                   //一个电角度的时间    
+            usMC_HallEva_IntervalTimeR = 16872;                   //一个电角度的时间    
             ucMC_HallEva_DirChangedFlag = 0;                    //清0表示方向变换
 
             ucMC_HallEva_OneRoundFlag = 0;                      //一圈标记清0 电度角
@@ -307,7 +307,7 @@ void vMC_EST_HallAngleL(void)
             uint8_t i;
             for ( i = 0; i < 6; i++  ) 
                 sumT += usaMC_HallEva_InvTimeBuf[i];
-            usMC_HallEva_IntervalTimeL = sumT;  //计算一圈的时间        
+            usMC_HallEva_IntervalTimeR = sumT;  //计算一圈的时间        
         }      
         else    
         {   
@@ -315,13 +315,13 @@ void vMC_EST_HallAngleL(void)
             if ( ucMC_HallEva_DirChangedFlag )              //判断方向1是方向未改变 
             {
                 //方向未改变 本次记录的换向间隔时间*6 预估一周的时间
-                usMC_HallEva_IntervalTimeL = 6 * usaMC_HallEva_InvTimeBuf[ucMC_HallEva_EdgeTickDir];
+                usMC_HallEva_IntervalTimeR = 6 * usaMC_HallEva_InvTimeBuf[ucMC_HallEva_EdgeTickDir];
             }   
             else      
             {
                 //方向改变 变量重置？
-                usMC_HallEva_IntervalTimeL = 16872; // ???  first round before continuous moving 
-                ucMC_HallEva_LowSpeedorEdgedL = 1;
+                usMC_HallEva_IntervalTimeR = 16872; // ???  first round before continuous moving 
+                ucMC_HallEva_LowSpeedorEdgedR = 1;
             }
             //记录6个数据就认为电角度完成1周  数组索引=5 表示记录了6个霍尔边沿的间隔
             if ( ucMC_HallEva_EdgeTickDir == 5 )
@@ -335,8 +335,8 @@ void vMC_EST_HallAngleL(void)
             ucMC_HallEva_EdgeTickDir = 0; 
 
         // 速度限制 过滤噪声 电角度周期不能小于46*64us 说明电角度频率不能大于1/46*64us 
-        if ( usMC_HallEva_IntervalTimeL < 46 )  
-             usMC_HallEva_IntervalTimeL = 46;
+        if ( usMC_HallEva_IntervalTimeR < 46 )  
+             usMC_HallEva_IntervalTimeR = 46;
         
         //CCW 1-2-3-4-5-6-1 CW 6-5-4-3-2-1-6
         ucMC_HallSector = ucaMC_HallSecTable[ucMC_HallValue];  //读取霍尔扇区 
@@ -485,7 +485,7 @@ void vMC_EST_HallAngleL(void)
         
             //loc_8003906
             //电角度周期小于1013*64 && 电角度转过一周
-            if ( (usMC_HallEva_IntervalTimeL<= DEF_ANGLE_LIMIT_SPEED_FREQUENCY) && ucMC_HallEva_OneRoundFlag )     
+            if ( (usMC_HallEva_IntervalTimeR<= DEF_ANGLE_LIMIT_SPEED_FREQUENCY) && ucMC_HallEva_OneRoundFlag )     
             {
                 //进入估算状态
                 //周期小于 DEF_ANGLE_LIMIT_SPEED_FREQUENCY*64 说明频率大于 1/ DEF_ANGLE_LIMIT_SPEED_FREQUENCY*64 所以是高速
@@ -525,7 +525,7 @@ void vMC_EST_HallAngleL(void)
                     {   
                         //普通扇区估算
                         if ( (ucMC_HallSector == 6 )                   //第6个扇区 最后一个扇区
-                            &&  (usMC_HallEva_IntervalTimeL > DEF_ANGLE_LIMIT_SPEED_FREQUENCY)     //电角度周期大于1013 是慢速
+                            &&  (usMC_HallEva_IntervalTimeR > DEF_ANGLE_LIMIT_SPEED_FREQUENCY)     //电角度周期大于1013 是慢速
                             )
                         {
                             //与58行对应 可能有什么用？
@@ -574,7 +574,7 @@ void vMC_EST_HallAngleL(void)
                     else      
                     {   // normal sector evaluate
                         if ( (ucMC_HallSector == 1)
-                            && (usMC_HallEva_IntervalTimeL > DEF_ANGLE_LIMIT_SPEED_FREQUENCY) )
+                            && (usMC_HallEva_IntervalTimeR > DEF_ANGLE_LIMIT_SPEED_FREQUENCY) )
                         {
                             usMC_HallEva_AngleLimit = 0;            //0 degree  
                         }
@@ -602,17 +602,17 @@ void vMC_EST_HallAngleL(void)
         else    
         { 			
             // hall error
-            ucMC_HallSectorErrL = 1;
+            ucMC_HallSectorErrR = 1;
             //loc_800361E
             vBSP_DisableSVPWMOutput();
         }
     
         {
             int32_t accTime = 0;
-            if ( usMC_HallEva_IntervalTimeL <= DEF_ANGLE_LIMIT_SPEED_FREQUENCY )   //电角度周期小于1013*64us
+            if ( usMC_HallEva_IntervalTimeR <= DEF_ANGLE_LIMIT_SPEED_FREQUENCY )   //电角度周期小于1013*64us
             {
                 // speed enough evaluate  
-                accTime = (usMC_HallEva_IntervalTimeL - usMC_HallEva_IntervalTimeLLast);    //当前周期-上一次的周期 为正表示速度变慢 为负表示速度变快了
+                accTime = (usMC_HallEva_IntervalTimeR - usMC_HallEva_IntervalTimeRLast);    //当前周期-上一次的周期 为正表示速度变慢 为负表示速度变快了
             } 
             else 
             {
@@ -620,21 +620,21 @@ void vMC_EST_HallAngleL(void)
             }
         
             //计算角度插值 插入角
-            //accTime上一个电角度的周期和这次电角度的周期的差 usMC_HallEva_IntervalTimeL时现在电角度的周期
+            //accTime上一个电角度的周期和这次电角度的周期的差 usMC_HallEva_IntervalTimeR时现在电角度的周期
             //现在电角度的周期 + 上一次电周期和这次电周期的周期差 = 估计下一个电角度的周期
             //sMC_HallEva_DistanceLeading = H200000F0_UW_HallEva_SecStartAngle_LAxis - ucMC_AngleEva;
             //sMC_HallEva_DistanceLeading + 0xFFFF / 估算的下一个电周期角度 + 0.5 
-            usMC_HallEva_Interpolation = ( ((int32_t)sMC_HallEva_DistanceLeading) + 0xFFFF + ((usMC_HallEva_IntervalTimeL + accTime) >> 1)   )/ (usMC_HallEva_IntervalTimeL + accTime);
+            usMC_HallEva_Interpolation = ( ((int32_t)sMC_HallEva_DistanceLeading) + 0xFFFF + ((usMC_HallEva_IntervalTimeR + accTime) >> 1)   )/ (usMC_HallEva_IntervalTimeR + accTime);
             //  (distance/(time+acc))+0.5
             ucMC_HallEva_Over180Flag = 0;
-            usMC_HallEva_IntervalTimeLLast = usMC_HallEva_IntervalTimeL;  
+            usMC_HallEva_IntervalTimeRLast = usMC_HallEva_IntervalTimeR;  
         }                          
     }
     
     /**
     超低速角度解决方案
     */
-    if ( ucMC_HallEva_LowSpeedorEdgedL )
+    if ( ucMC_HallEva_LowSpeedorEdgedR )
     { 
         // low speed, so use the center of sector 低速的时候不进行估算直接使用 中间角度
         usMC_AngleEva = usMC_HallEva_SectCenterAngle;
@@ -644,23 +644,23 @@ void vMC_EST_HallAngleL(void)
     霍尔0位校准
     */
     // 估算角度 赋值外部全局变量
-    usMC_AngleFbL = usMC_AngleEva;
+    usMC_AngleFbR = usMC_AngleEva;
     
     // 角度加上偏置值
-    if ( ucMC_HallEva_LowSpeedorEdgedL )  
+    if ( ucMC_HallEva_LowSpeedorEdgedR )  
     {
-        usMC_AngleFbL += 4732;//26 degree    4732
+        usMC_AngleFbR += 4732;//26 degree    4732
     }  
     else 
     {
         
         if ( ucMC_HallEva_Direction )  
         {   //CCW 逆时针旋转       
-            usMC_AngleFbL += (4732 + 1093);//32 degree
+            usMC_AngleFbR += (4732 + 1093);//32 degree
         }  
         else  
         {   //CW  顺时针旋转
-            usMC_AngleFbL += (4732 - 1093);//20 degree
+            usMC_AngleFbR += (4732 - 1093);//20 degree
         }
     }
 
@@ -670,13 +670,13 @@ void vMC_EST_HallAngleL(void)
     {   
         //高低速的转折速度在 78 79 rpm左右 实测
          
-        int16_t tmp = ((60/10)*16000)/usMC_HallEva_IntervalTimeL;
+        int16_t tmp = ((60/10)*16000)/usMC_HallEva_IntervalTimeR;
         if( tmp < 10 )
             tmp  = 0;
         if( !ucMC_HallEva_Direction )
-            sMC_HallEstSpeed_RPML = -tmp;    //ccw
+            sMC_HallEstSpeed_RPMR = -tmp;    //ccw
         else
-            sMC_HallEstSpeed_RPML = tmp;     //cw
+            sMC_HallEstSpeed_RPMR = tmp;     //cw
         
         
     }
