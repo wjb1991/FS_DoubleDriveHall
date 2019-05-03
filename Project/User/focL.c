@@ -1,26 +1,43 @@
 #include "focL.h"
 #include "mc_estHallAngleL.h"
+#include "mc_estHallAngleR.h"
 
 int16_t	sFOC_QOutL = 0;
 int16_t	sFOC_DOutL = 0;
-int16_t	usFOC_AlphaOut = 0;     //IQ11? -16~15.99
-int16_t	usFOC_BetaOut = 0;      //IQ11? -16~15.99
 
-
-int16_t	usFOC_PhaseUOffset;
-int16_t	usFOC_PhaseVOffset;
 int16_t	sFOC_CurrVL;
 int16_t	sFOC_CurrUL;
-int16_t	usFOC_CurrAlpha;
-int16_t	usFOC_CurrBeta;
-int16_t	usFOC_CurrD;
-int16_t	usFOC_CurrQ;
-int16_t	usFOC_DCurrPIDInteger;
+
+int16_t	usFOC_AlphaOutL = 0;     //IQ11? -16~15.99
+int16_t	usFOC_BetaOutL = 0;      //IQ11? -16~15.99
+
+int16_t	usFOC_CurrAlphaL;
+int16_t	usFOC_CurrBetaL;
+int16_t	usFOC_CurrDL;
+int16_t	usFOC_CurrQL;
+int16_t	usFOC_DCurrPIDIntegerL;
+
+int16_t	usFOC_SinL;
+int16_t	usFOC_CosL;
 
 
+int16_t	sFOC_QOutR = 0;
+int16_t	sFOC_DOutR = 0;
 
-int16_t	usFOC_Sin;
-int16_t	usFOC_Cos;
+int16_t	sFOC_CurrVR;
+int16_t	sFOC_CurrUR;
+
+int16_t	usFOC_AlphaOutR = 0;     //IQ11? -16~15.99
+int16_t	usFOC_BetaOutR = 0;      //IQ11? -16~15.99
+
+int16_t	usFOC_CurrAlphaR;
+int16_t	usFOC_CurrBetaR;
+int16_t	usFOC_CurrDR;
+int16_t	usFOC_CurrQR;
+int16_t	usFOC_DCurrPIDIntegerR;
+
+int16_t	usFOC_SinR;
+int16_t	usFOC_CosR;
 
 
 
@@ -177,11 +194,19 @@ int16_t GetCosValue(uint16_t angle)
 	return GetSinValue(angle + 0x4000);
 }
 
-void vFOC_MotorLock(void)
+void vFOC_MotorLockL(void)
 {
-	usFOC_DCurrPIDInteger = 0;
-	usFOC_CurrD = 0;
+	usFOC_DCurrPIDIntegerL = 0;
+	usFOC_CurrDL = 0;
 	sFOC_DOutL = 0;
+	return;
+}
+
+void vFOC_MotorLockR(void)
+{
+	usFOC_DCurrPIDIntegerR = 0;
+	usFOC_CurrDR = 0;
+	sFOC_DOutR = 0;
 	return;
 }
 
@@ -189,15 +214,15 @@ void vFOC_MotorLock(void)
 /**
     Id 电流PID
 */
-void vFOC_DCurrentControl(void) 
+void vFOC_DCurrentControlL(void) 
 {
 	int16_t	errT;
 	int16_t	tmp;
 	int16_t	pidOut,pidOutLimit;
 	
-    //解算出来的Id = usFOC_CurrD
+    //解算出来的Id = usFOC_CurrDL
     //没有和其他变量相减说明 IdRef 是0 
-	errT = -usFOC_CurrD;
+	errT = -usFOC_CurrDL;
     //tmp是 errT*Ki Ki取得非常小 所以只有  -1 <= errT*Ki <= 1
 	if ( errT <= 0 )	
     {
@@ -211,19 +236,57 @@ void vFOC_DCurrentControl(void)
 		tmp = 1;
 	}
     //积分累积
-	usFOC_DCurrPIDInteger += tmp; 
+	usFOC_DCurrPIDIntegerL += tmp; 
     //out = errT*Kp + (errT0 +...+ errTn)*Ki
-	pidOut = usFOC_DCurrPIDInteger + (errT >> 2);   //sk-1>>2 
+	pidOut = usFOC_DCurrPIDIntegerL + (errT >> 2);   //sk-1>>2 
     //输出限制
 	pidOutLimit = pidOut;
 	if (pidOutLimit<-DEF_VDOUT_MAX)	{
 		pidOutLimit = -DEF_VDOUT_MAX;
-		usFOC_DCurrPIDInteger = -DEF_VDOUT_MAX;
+		usFOC_DCurrPIDIntegerL = -DEF_VDOUT_MAX;
 	} else if (pidOutLimit >DEF_VDOUT_MAX) {
 		pidOutLimit = DEF_VDOUT_MAX;
-		usFOC_DCurrPIDInteger = DEF_VDOUT_MAX;
+		usFOC_DCurrPIDIntegerL = DEF_VDOUT_MAX;
 	}
 	sFOC_DOutL = pidOutLimit >> 6;
+	return;	
+}
+
+void vFOC_DCurrentControlR(void) 
+{
+	int16_t	errT;
+	int16_t	tmp;
+	int16_t	pidOut,pidOutLimit;
+	
+    //解算出来的Id = usFOC_CurrDL
+    //没有和其他变量相减说明 IdRef 是0 
+	errT = -usFOC_CurrDR;
+    //tmp是 errT*Ki Ki取得非常小 所以只有  -1 <= errT*Ki <= 1
+	if ( errT <= 0 )	
+    {
+		if ( errT >= 0 )
+			tmp = 0;
+		else
+			tmp = -1;
+	}	
+    else	
+    {
+		tmp = 1;
+	}
+    //积分累积
+	usFOC_DCurrPIDIntegerR += tmp; 
+    //out = errT*Kp + (errT0 +...+ errTn)*Ki
+	pidOut = usFOC_DCurrPIDIntegerR + (errT >> 2);   //sk-1>>2 
+    //输出限制
+	pidOutLimit = pidOut;
+	if (pidOutLimit<-DEF_VDOUT_MAX)	{
+		pidOutLimit = -DEF_VDOUT_MAX;
+		usFOC_DCurrPIDIntegerR = -DEF_VDOUT_MAX;
+	} else if (pidOutLimit >DEF_VDOUT_MAX) {
+		pidOutLimit = DEF_VDOUT_MAX;
+		usFOC_DCurrPIDIntegerR = DEF_VDOUT_MAX;
+	}
+	sFOC_DOutR = pidOutLimit >> 6;
 	return;	
 }
 
@@ -233,51 +296,89 @@ void vFOC_DCurrentControl(void)
     iα = ia
     iβ = (ia +2ib)/√3
 */
-void vFOC_Clark(void)
+void vFOC_ClarkL(void)
 {
     //ia = sFOC_CurrUL  ib = sFOC_CurrVL    1/√3 = 18918  1 = 32767
     //iα = ia
-	usFOC_CurrAlpha = sFOC_CurrUL;	
+	usFOC_CurrAlphaL = sFOC_CurrUL;	
     //iβ = (ia +2ib)/√3
-	usFOC_CurrBeta = 18918 * ( ((int32_t)sFOC_CurrUL) + 2 * ((int32_t) sFOC_CurrVL) ) >> 15;
+	usFOC_CurrBetaL = 18918 * ( ((int32_t)sFOC_CurrUL) + 2 * ((int32_t) sFOC_CurrVL) ) >> 15;
 	return;
 }
+
+void vFOC_ClarkR(void)
+{
+    //ia = sFOC_CurrUL  ib = sFOC_CurrVL    1/√3 = 18918  1 = 32767
+    //iα = ia
+	usFOC_CurrAlphaR = sFOC_CurrUR;	
+    //iβ = (ia +2ib)/√3
+	usFOC_CurrBetaR = 18918 * ( ((int32_t)sFOC_CurrUR) + 2 * ((int32_t) sFOC_CurrVR) ) >> 15;
+	return;
+}
+
 /**
     Park变换
     Id = iα cosθ + iβ sinθ
     Iq = -iα sinθ + iβ cosθ
 */
-void vFOC_Park(void) 
+void vFOC_ParkL(void) 
 {
 	int32_t	tmp;
-    //解算电流Id Id = iα cosθ + iβ sinθ 这里的角度是上一次的角度 usFOC_Cos usFOC_Sin 都是上一次的值
-	tmp = (usFOC_CurrAlpha * ((int32_t)usFOC_Cos) + usFOC_CurrBeta * ((int32_t)usFOC_Sin)) >> 15;
+    //解算电流Id Id = iα cosθ + iβ sinθ 这里的角度是上一次的角度 usFOC_CosL usFOC_SinL 都是上一次的值
+	tmp = (usFOC_CurrAlphaL * ((int32_t)usFOC_CosL) + usFOC_CurrBetaL * ((int32_t)usFOC_SinL)) >> 15;
 	//低通滤波 Id(n) = Id(n)*(1-0.62) + Id(n-1)*0.62
-    usFOC_CurrD = (20317 * ((int32_t)usFOC_CurrD) + 12451 * tmp) >> 15;
+    usFOC_CurrDL = (20317 * ((int32_t)usFOC_CurrDL) + 12451 * tmp) >> 15;
     //Iq = -iα sinθ + iβ cosθ
-	tmp = (usFOC_CurrBeta * ((int32_t)usFOC_Cos) - usFOC_CurrAlpha * ((int32_t)usFOC_Sin)) >> 15;
+	tmp = (usFOC_CurrBetaL * ((int32_t)usFOC_CosL) - usFOC_CurrAlphaL * ((int32_t)usFOC_SinL)) >> 15;
 	//低通滤波 Id(n) = Id(n)*(1-0.62) + Id(n-1)*0.62
-    usFOC_CurrQ = (20317 * ((int32_t)usFOC_CurrD) + 12451 * tmp) >> 15;
+    usFOC_CurrQL = (20317 * ((int32_t)usFOC_CurrDL) + 12451 * tmp) >> 15;
 	return;
 }
+
+void vFOC_ParkR(void) 
+{
+	int32_t	tmp;
+    //解算电流Id Id = iα cosθ + iβ sinθ 这里的角度是上一次的角度 usFOC_CosR usFOC_SinL 都是上一次的值
+	tmp = (usFOC_CurrAlphaR * ((int32_t)usFOC_CosR) + usFOC_CurrBetaR * ((int32_t)usFOC_SinR)) >> 15;
+	//低通滤波 Id(n) = Id(n)*(1-0.62) + Id(n-1)*0.62
+    usFOC_CurrDR = (20317 * ((int32_t)usFOC_CurrDR) + 12451 * tmp) >> 15;
+    //Iq = -iα sinθ + iβ cosθ
+	tmp = (usFOC_CurrBetaR * ((int32_t)usFOC_CosR) - usFOC_CurrAlphaR * ((int32_t)usFOC_SinR)) >> 15;
+	//低通滤波 Id(n) = Id(n)*(1-0.62) + Id(n-1)*0.62
+    usFOC_CurrQR = (20317 * ((int32_t)usFOC_CurrDR) + 12451 * tmp) >> 15;
+	return;
+}
+
 /**
     逆Park变换
     Vα = Vd.cosθ - Vq.sinθ
     Vβ = Vd.sinθ + Vq.cosθ
 */
-void vFOC_IPark(void) 
+void vFOC_IParkL(void) 
 {	
     //用新的角度计算 sinθ cosθ
-	usFOC_Sin = GetSinValue(usMC_AngleFbL);
-	usFOC_Cos = GetCosValue(usMC_AngleFbL);
+	usFOC_SinL = GetSinValue(usMC_AngleFbL);
+	usFOC_CosL = GetCosValue(usMC_AngleFbL);
 	//Vα = Vd.cosθ - Vq.sinθ
-	usFOC_AlphaOut = (((int32_t)sFOC_DOutL) * usFOC_Cos - ((int32_t)sFOC_QOutL) * usFOC_Sin) >> 15;
+	usFOC_AlphaOutL = (((int32_t)sFOC_DOutL) * usFOC_CosL - ((int32_t)sFOC_QOutL) * usFOC_SinL) >> 15;
 	//Vβ = Vd.sinθ + Vq.cosθ
-    usFOC_BetaOut = (((int32_t)sFOC_QOutL) * usFOC_Cos + ((int32_t)sFOC_DOutL) * usFOC_Sin) >> 15;
+    usFOC_BetaOutL = (((int32_t)sFOC_QOutL) * usFOC_CosL + ((int32_t)sFOC_DOutL) * usFOC_SinL) >> 15;
 	return ;
 }
 
-int8_t	secGT;
+void vFOC_IParkR(void) 
+{	
+    //用新的角度计算 sinθ cosθ
+	usFOC_SinR = GetSinValue(usMC_AngleFbR);
+	usFOC_CosR = GetCosValue(usMC_AngleFbR);
+	//Vα = Vd.cosθ - Vq.sinθ
+	usFOC_AlphaOutR = (((int32_t)sFOC_DOutR) * usFOC_CosR - ((int32_t)sFOC_QOutR) * usFOC_SinR) >> 15;
+	//Vβ = Vd.sinθ + Vq.cosθ
+    usFOC_BetaOutR = (((int32_t)sFOC_QOutR) * usFOC_CosR + ((int32_t)sFOC_DOutR) * usFOC_SinR) >> 15;
+	return ;
+}
+
+int8_t	secGTL;
 
 /**
     Vα 和 Vβ颠倒了
@@ -286,7 +387,7 @@ int8_t	secGT;
     Vr2 = (-Vβ + √3.Vα)/2
     Vr3 = (-Vβ - √3.Vα)/2
 */
-void vFOC_SVPWM(void) 
+void vFOC_SVPWML(void) 
 {
 
 	int16_t	dutyU,dutyV,dutyW;
@@ -294,24 +395,24 @@ void vFOC_SVPWM(void)
 	int16_t	vRef1,vRef2,vRef3;
 	int8_t	secT;
 
-	vRef1 = usFOC_BetaOut;
-	vRef2 = ((3547 * ((int32_t)usFOC_AlphaOut)) >> 11) - usFOC_BetaOut;     //(-Vβ + √3.Vα)
-	vRef3 = -(usFOC_BetaOut + ((3547 * ((int32_t)usFOC_AlphaOut)) >> 11));  //(-Vβ - √3.Vα)
+	vRef1 = usFOC_BetaOutL;
+	vRef2 = ((3547 * ((int32_t)usFOC_AlphaOutL)) >> 11) - usFOC_BetaOutL;     //(-Vβ + √3.Vα)
+	vRef3 = -(usFOC_BetaOutL + ((3547 * ((int32_t)usFOC_AlphaOutL)) >> 11));  //(-Vβ - √3.Vα)
 
-	secGT = 0;
+	secGTL = 0;
 	if ( vRef1 > 0 )
-		secGT = 1;
+		secGTL = 1;
 	if ( vRef2 > 0 )
-		secGT = (secGT + 2);
+		secGTL = (secGTL + 2);
 	if ( vRef3 > 0 )
-		secGT = (secGT + 4);
+		secGTL = (secGTL + 4);
 
 
 	vx = (((int32_t)vRef1)*255)>>10;
 	vy	= (((int32_t)(-vRef3>>1))*255)>>10; 
 	vz = (((int32_t)(-vRef2>>1))*255)>>10;;
 
-	switch ( secGT )	{
+	switch ( secGTL )	{
     case 0:
 		dutyU = 255;
 		dutyV = 255;
@@ -368,3 +469,90 @@ void vFOC_SVPWM(void)
 	
 	return ;
 }
+
+int8_t	secGTR;
+
+void vFOC_SVPWMR(void) 
+{
+
+	int16_t	dutyU,dutyV,dutyW;
+	int16_t	vx,vy,vz;
+	int16_t	vRef1,vRef2,vRef3;
+	int8_t	secT;
+
+	vRef1 = usFOC_BetaOutR;
+	vRef2 = ((3547 * ((int32_t)usFOC_AlphaOutR)) >> 11) - usFOC_BetaOutR;     //(-Vβ + √3.Vα)
+	vRef3 = -(usFOC_BetaOutR + ((3547 * ((int32_t)usFOC_AlphaOutR)) >> 11));  //(-Vβ - √3.Vα)
+
+	secGTR = 0;
+	if ( vRef1 > 0 )
+		secGTR = 1;
+	if ( vRef2 > 0 )
+		secGTR = (secGTR + 2);
+	if ( vRef3 > 0 )
+		secGTR = (secGTR + 4);
+
+
+	vx = (((int32_t)vRef1)*255)>>10;
+	vy	= (((int32_t)(-vRef3>>1))*255)>>10; 
+	vz = (((int32_t)(-vRef2>>1))*255)>>10;;
+
+	switch ( secGTR )	{
+    case 0:
+		dutyU = 255;
+		dutyV = 255;
+		dutyW = 255;
+		break;
+    case 1:
+		dutyU = (255 - vz + vy);
+		dutyV = (vz + 255 + vy);    // taon = tbon+t1       
+		dutyW = (255 - vz - vy);    // tbon = (1-t1-t2)/2 = 0.5- 0.5t1-0.5t2
+		break;
+    case 2:
+		dutyU = (255 - vx + vy);
+		dutyV = (255 - vy + vx);
+		dutyW = (255 - vy - vx);
+		break;
+    case 3:
+		dutyU = (255 - vz + vx);
+		dutyV = (vz + 255 + vx);
+		dutyW = (255 - vx + vz);
+		break;
+    case 4:
+		dutyU = (255 - vz + vx);
+		dutyV = (vz + 255 + vx);
+		dutyW = (255 - vx + vz);
+		break;
+    case 5:
+		dutyU = (255 - vx + vy);
+		dutyV = (255 - vy + vx);
+		dutyW = (255 - vy - vx);
+		break;
+    case 6:
+		dutyU = (255 - vz + vy);
+		dutyV = (vz + 255 + vy);
+		dutyW = (255 - vz - vy);
+		break;
+    default:
+        dutyU = 255;
+        dutyV = 255;
+        dutyW = 255;
+        break;
+		//break;
+	}
+	if ( dutyU < 0 )
+		dutyU = 0;
+	if ( dutyV < 0 )
+		dutyV = 0;
+	if ( dutyW < 0 )
+		dutyW = 0;
+
+	TIM8->CCR1 = dutyU;
+	TIM8->CCR2 = dutyV;
+	TIM8->CCR3 = dutyW;
+
+	
+	return ;
+}
+
+

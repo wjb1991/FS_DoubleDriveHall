@@ -87,6 +87,16 @@ __INLINE void vBSP_EnableSVPWMOutput(void)
     TIM_CtrlPWMOutputs(TIM1, ENABLE);
     TIM_CtrlPWMOutputs(TIM8, ENABLE);
 }
+
+__INLINE void vBSP_EnableSVPWMOutputL(void)
+{
+    TIM_CtrlPWMOutputs(TIM1, ENABLE);
+}
+
+__INLINE void vBSP_EnableSVPWMOutputR(void)
+{
+    TIM_CtrlPWMOutputs(TIM8, ENABLE);
+}
 /**
   * @brief  Configures the USART Peripheral.
   * @param  None
@@ -95,6 +105,16 @@ __INLINE void vBSP_EnableSVPWMOutput(void)
 __INLINE void vBSP_DisableSVPWMOutput(void)
 {
     TIM_CtrlPWMOutputs(TIM1, DISABLE);
+    TIM_CtrlPWMOutputs(TIM8, DISABLE);
+}
+
+__INLINE void vBSP_DisableSVPWMOutputL(void)
+{
+    TIM_CtrlPWMOutputs(TIM1, DISABLE);
+}
+
+__INLINE void vBSP_DisableSVPWMOutputR(void)
+{
     TIM_CtrlPWMOutputs(TIM8, DISABLE);
 }
 /**
@@ -108,8 +128,12 @@ _iq vBSP_GetVBus_V(void);
 
 _iq vBSP_GetVBusCurrent_A(void);
 
-int32_t vBSP_BrakeEnable(void);
+int32_t vBSP_BrakeEnableL(void);
 
-int32_t vBSP_BrakeDisable(void);
+int32_t vBSP_BrakeDisableL(void);
+
+int32_t vBSP_BrakeEnableR(void);
+
+int32_t vBSP_BrakeDisableR(void);
 
 #endif

@@ -538,11 +538,11 @@ _iq vBSP_GetVBus_V(void)
 {
     _iq VBus_pu = _IQ(0.0);
     int i = 0;
-    for( i = 0 ; i < 16 ; i ++)
+    for( i = 0 ; i < 8 ; i ++)
     {
-        VBus_pu += (ADC_RegularConvertedValueTab[i*2+1]&0xffff0000) >> 12;  
+        VBus_pu += (ADC_RegularConvertedValueTab[i*5+2]&0xffff0000) >> 12;  
     }
-    VBus_pu = _IQdiv16(VBus_pu);
+    VBus_pu = _IQdiv8(VBus_pu);
     VBus_pu = _IQmpy(VBus_pu,_IQ(42.9));
     return (VBus_pu);
 }
@@ -569,14 +569,26 @@ _iq vBSP_GetVBusCurrent_A(void)
     return (VBus_pu);
 }
 
-int32_t vBSP_BrakeEnable(void)
+int32_t vBSP_BrakeEnableL(void)
 {
     TIM1->CCER &= 0xeee;//使能该通道输出//比较输出使能 
     return 0;
 }
 
-int32_t vBSP_BrakeDisable(void)
+int32_t vBSP_BrakeDisableL(void)
 {
     TIM1->CCER |= 0x111;//使能该通道输出//比较输出使能 
+    return 0;
+}
+
+int32_t vBSP_BrakeEnableR(void)
+{
+    TIM8->CCER &= 0xeee;//使能该通道输出//比较输出使能 
+    return 0;
+}
+
+int32_t vBSP_BrakeDisableR(void)
+{
+    TIM8->CCER |= 0x111;//使能该通道输出//比较输出使能 
     return 0;
 }
