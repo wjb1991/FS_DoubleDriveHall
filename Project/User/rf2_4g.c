@@ -95,7 +95,7 @@ void RF2_4G_Init(void)
     GPIO_Init(GPIOB, &GPIO_InitStructure);   
     
     
-    //BK2425_Initialize();
+    BK2425_Initialize();
     
     {
         uint8_t Rf_Address[10];

@@ -644,7 +644,7 @@ void SystemErrorCatch(void)
             ucSystemErrID = 1;
         }
 
-        //»ô¶û´íÎó ¹ÊÕÏ3
+        //×ó»ô¶û´íÎó ¹ÊÕÏ2
         if(ucMC_HallSectorErrL)
         {
             ucComErrState = 0x01;       //±¨¿ØÖÆ³ö´í            
@@ -658,7 +658,13 @@ void SystemErrorCatch(void)
             ucSystemErrID = 3;
         }
 
- 
+        //ÓÒ»ô¶û´íÎó ¹ÊÕÏ4
+        if(ucMC_HallSectorErrR)
+        {
+            ucComErrState = 0x01;       //±¨¿ØÖÆ³ö´í            
+            ucSystemErrID = 4;
+        }
+        
         if(ucComErrState != 0)
             ucSystemErrorCatchEvent = 1;
     }
@@ -826,7 +832,7 @@ int main(void)
     nMC_InitFinished = 1;
     while (1)
     {
-        //RF2_4G_Poll();
+        RF2_4G_Poll();
         //sADValue = -10; 
         
         

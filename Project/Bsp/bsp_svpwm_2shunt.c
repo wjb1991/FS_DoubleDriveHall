@@ -6,7 +6,7 @@
 #define ADC_SampleTime_XCycles5 ADC_SampleTime_7Cycles5        
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-__IO uint16_t ADC_RegularConvertedValueTab[30];
+__IO uint32_t ADC_RegularConvertedValueTab[32];
 
 uint16_t usMC_PhaseAOffsetL = 0;
 uint16_t usMC_PhaseBOffsetL = 0;
@@ -27,34 +27,6 @@ void vBSP_SVPWM_2ShuntCurrentReadingCalibration(void);
   */
 int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
 {
-    
-    /* -----------------------------------------------------------------------
-    TIM1 Configuration to:
-
-    1/ Generate 3 complementary PWM signals with 3 different duty cycles:
-    TIM1CLK is fixed to SystemCoreClock, the TIM1 Prescaler is equal to 0 so the 
-    TIM1 counter clock used is SystemCoreClock.
-    * SystemCoreClock is set to 72 MHz for Low-density, Medium-density, High-density
-    and Connectivity line devices. For Low-Density Value line and Medium-Density 
-    Value line devices, SystemCoreClock is set to 24 MHz.
-
-    The objective is to generate PWM signal at 17.57 KHz:
-    - TIM1_Period = (SystemCoreClock / 17570) - 1
-
-    The Three Duty cycles are computed as the following description: 
-
-    The channel 1 duty cycle is set to 50% so channel 1N is set to 50%.
-    The channel 2 duty cycle is set to 25% so channel 2N is set to 75%.
-    The channel 3 duty cycle is set to 12.5% so channel 3N is set to 87.5%.
-    The Timer pulse is calculated as follows:
-      - ChannelxPulse = DutyCycle * (TIM1_Period - 1) / 100
-
-    2/ Insert a dead time equal to 11/SystemCoreClock ns
-    3/ Configure the break feature, active at High level, and using the automatic 
-     output enable feature
-    4/ Use the Locking parameters level1. 
-    ----------------------------------------------------------------------- */
-
     ADC_InitTypeDef           ADC_InitStructure;
     DMA_InitTypeDef           DMA_InitStructure;
     TIM_TimeBaseInitTypeDef   TIM_TimeBaseStructure;
@@ -142,45 +114,55 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     TIM_OC4PreloadConfig(TIM8, TIM_OCPreload_Enable);               //使能TIMx在CCR3上的预装载寄存器，这句的功能是让改变CCR之后马上有效 ,立刻改变占空比
     //TIM_ARRPreloadConfig(TIM1,ENABLE);                            //使能TIMx在ARR上的预装载寄存器?//立刻改变频率
 
-    // ADC配置
-    /* DMA1 Channel1 Configuration ----------------------------------------------*/
+    
+    
+    /* DMA1 channel1 configuration ----------------------------------------------*/
     DMA_DeInit(DMA1_Channel1);
-    DMA_InitStructure.DMA_PeripheralBaseAddr = ADC1_DR_Address;
+    DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)ADC1_DR_Address;
     DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)ADC_RegularConvertedValueTab;
     DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
-    DMA_InitStructure.DMA_BufferSize = 30;
+    DMA_InitStructure.DMA_BufferSize = 32;
     DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
     DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-    DMA_InitStructure.DMA_PeripheralDataSize = DMA_MemoryDataSize_HalfWord;
-    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
+    DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Word;
+    DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Word;
     DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
     DMA_InitStructure.DMA_Priority = DMA_Priority_High;
     DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
     DMA_Init(DMA1_Channel1, &DMA_InitStructure);
-
-    /* Enable DMA1 channel1 */
+    /* Enable DMA1 Channel1 */
     DMA_Cmd(DMA1_Channel1, ENABLE);
-    
-    ADC_TempSensorVrefintCmd(ENABLE);  
-    
+
     /* ADC1 configuration ------------------------------------------------------*/
-    ADC_InitStructure.ADC_Mode = ADC_Mode_RegInjecSimult;                  //
+    ADC_InitStructure.ADC_Mode = ADC_Mode_RegInjecSimult;
     ADC_InitStructure.ADC_ScanConvMode = ENABLE;
     ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
-    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None; //ADC_ExternalTrigConv_None
+    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
     ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-    ADC_InitStructure.ADC_NbrOfChannel = 5;                             //规则通道数量
+    ADC_InitStructure.ADC_NbrOfChannel = 2;
     ADC_Init(ADC1, &ADC_InitStructure);
+    /* ADC1 regular channels configuration */ 
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint,     1, ADC_SampleTime_239Cycles5);    	
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_10,          2, ADC_SampleTime_239Cycles5);    	//PC0 母线电压
+    //ADC_RegularChannelConfig(ADC2, ADC_Channel_0,           3, ADC_SampleTime_239Cycles5);     	//PA0 左轴母线
+    //ADC_RegularChannelConfig(ADC2, ADC_Channel_4,           4, ADC_SampleTime_239Cycles5);     	//PA4 右轴母线
     
-    
+
+
     /* ADC2 configuration ------------------------------------------------------*/
-    ADC_InitStructure.ADC_Mode = ADC_Mode_RegInjecSimult;                  //
+    ADC_InitStructure.ADC_Mode = ADC_Mode_RegInjecSimult;
     ADC_InitStructure.ADC_ScanConvMode = ENABLE;
     ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
-    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None; //ADC_ExternalTrigConv_None
+    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
     ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-    ADC_InitStructure.ADC_NbrOfChannel = 0;                             //规则通道数量
+    ADC_InitStructure.ADC_NbrOfChannel = 2;
     ADC_Init(ADC2, &ADC_InitStructure);
+    /* ADC2 regular channels configuration */ 
+
+    ADC_RegularChannelConfig(ADC2, ADC_Channel_0,           1, ADC_SampleTime_239Cycles5);     	//PA0 左轴母线
+    ADC_RegularChannelConfig(ADC2, ADC_Channel_4,           2, ADC_SampleTime_239Cycles5);     	//PA4 右轴母线
+    
+
     
     /* ADC3 configuration ------------------------------------------------------*/
     ADC_InitStructure.ADC_Mode = ADC_Mode_RegInjecSimult;                  //
@@ -190,16 +172,6 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
     ADC_InitStructure.ADC_NbrOfChannel = 0;                             //规则通道数量
     ADC_Init(ADC3, &ADC_InitStructure);
-    
-    
-    //page157 温度传感器和VREFINT只能出现在主ADC1中
-    //==============ADC1规则通道配置==============//
-    /* ADC1 regular channel14 configuration */ 
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_TempSensor,  1, ADC_SampleTime_239Cycles5);    
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint,     2, ADC_SampleTime_239Cycles5);    	
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_10,          3, ADC_SampleTime_239Cycles5);    	//PC0 母线电压
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_0,           4, ADC_SampleTime_239Cycles5);     	//PA0 左轴母线
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_4,           5, ADC_SampleTime_239Cycles5);     	//PA4 右轴母线
     
     //==============ADC1注入通道配置==============//
     /* Set injected sequencer length */
@@ -224,47 +196,38 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     ADC_InjectedChannelConfig(ADC3, ADC_Channel_12,         1, ADC_SampleTime_XCycles5);        //PC2
     ADC_InjectedChannelConfig(ADC3, ADC_Channel_3,          2, ADC_SampleTime_XCycles5);        //PA3
     ADC_InjectedChannelConfig(ADC3, ADC_Channel_11,         3, ADC_SampleTime_XCycles5);        //PC1 IN9绿
+    
     /* ADC1 injected external trigger configuration */
-    ADC_ExternalTrigInjectedConvConfig(ADC3, ADC_ExternalTrigInjecConv_T1_TRGO);                 //从ADC模块用软件触发
+    ADC_ExternalTrigInjectedConvConfig(ADC3, ADC_ExternalTrigInjecConv_T1_TRGO);                 //从ADC模块用软件触发 
     
-    
-    /* Enable automatic injected conversion start after regular one */
-    //ADC_AutoInjectedConvCmd(ADC1, ENABLE);                                                    //自动注入 软件触发也算注入了
-
     /* Enable ADC1 DMA */
     ADC_DMACmd(ADC1, ENABLE);
 
-    /* Enable ADC1 external trigger */ 
+    /* Enable ADC2 external trigger conversion */
     ADC_ExternalTrigConvCmd(ADC1, DISABLE);
     
-    /* Enable ADC1 external Injected trigger */ 
-    ADC_ExternalTrigInjectedConvCmd(ADC1, DISABLE); 
+    /* Enable ADC2 external trigger conversion */
+    ADC_ExternalTrigConvCmd(ADC2, ENABLE);
     
-    
-    
-    /* Enable ADC2 external trigger */ 
-    ADC_ExternalTrigConvCmd(ADC2, DISABLE);
-    
+    /* Enable ADC2 external trigger conversion */
+    ADC_ExternalTrigConvCmd(ADC3, DISABLE);
+
     /* Enable ADC2 external Injected trigger */ 
     ADC_ExternalTrigInjectedConvCmd(ADC2, ENABLE); 
-    
-    /* Enable JEOC interrupt */
-    ADC_ITConfig(ADC2, ADC_IT_JEOC, ENABLE);
-    
-    
-    
-    /* Enable ADC3 external trigger */ 
-    ADC_ExternalTrigConvCmd(ADC3, ENABLE);
-    
     /* Enable ADC3 external Injected trigger */ 
     ADC_ExternalTrigInjectedConvCmd(ADC3, ENABLE); 
-    
+
+    /* Enable JEOC interrupt */
+    ADC_ITConfig(ADC2, ADC_IT_JEOC, ENABLE);
+
     /* Enable JEOC interrupt */
     ADC_ITConfig(ADC3, ADC_IT_JEOC, ENABLE);
-
-    //==============开启ADC1 校正ADC==============//
+    
+    
     /* Enable ADC1 */
     ADC_Cmd(ADC1, ENABLE);
+    /* Enable Vrefint channel17 */
+    ADC_TempSensorVrefintCmd(ENABLE);
 
     /* Enable ADC1 reset calibration register */   
     ADC_ResetCalibration(ADC1);
@@ -276,21 +239,19 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     /* Check the end of ADC1 calibration */
     while(ADC_GetCalibrationStatus(ADC1));
 
-    //==============开启ADC2 校正ADC==============//
     /* Enable ADC2 */
     ADC_Cmd(ADC2, ENABLE);
 
     /* Enable ADC2 reset calibration register */   
     ADC_ResetCalibration(ADC2);
-    /* Check the end of ADC1 reset calibration register */
+    /* Check the end of ADC2 reset calibration register */
     while(ADC_GetResetCalibrationStatus(ADC2));
 
-    /* Start ADC1 calibration */
+    /* Start ADC2 calibration */
     ADC_StartCalibration(ADC2);
-    /* Check the end of ADC1 calibration */
+    /* Check the end of ADC2 calibration */
     while(ADC_GetCalibrationStatus(ADC2));
-    
-    
+
     //==============开启ADC3 校正ADC==============//
     /* Enable ADC3 */
     ADC_Cmd(ADC3, ENABLE);
@@ -304,22 +265,17 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     ADC_StartCalibration(ADC3);
     /* Check the end of ADC1 calibration */
     while(ADC_GetCalibrationStatus(ADC3));
-    
 
-    //==============开启ADC1_2规则转换==============//
-    /* Start ADC1 calibration */
-    ADC_StartCalibration(ADC1);
-    /* Check the end of ADC1 calibration */
-    while(ADC_GetCalibrationStatus(ADC1));
-     
-    //==============================================//
-    //vBSP_DelayMS(10);
-    //vBSP_SVPWM_2ShuntCurrentReadingCalibration1();
 
     /* Start ADC1 Software Conversion */ 
-    ADC_SoftwareStartConvCmd(ADC1, ENABLE); 
-    
-    /* TIM1 counter enable */
+    ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+
+    /* Test on DMA1 channel1 transfer complete flag */
+    while(!DMA_GetFlagStatus(DMA1_FLAG_TC1));
+    /* Clear DMA1 channel1 transfer complete flag */
+    DMA_ClearFlag(DMA1_FLAG_TC1);
+  
+      /* TIM1 counter enable */
     TIM_Cmd(TIM1, ENABLE);
     TIM_Cmd(TIM8, ENABLE);
 		
@@ -342,11 +298,10 @@ int32_t nBSP_SVPWM2ShuntInit(int nFrequency)
     ADC_ClearITPendingBit(ADC1,ADC_IT_JEOC);
     ADC_ClearITPendingBit(ADC3,ADC_IT_JEOC);
     
-    vNVIC_Configuration();
-    
-    return 0;
-}   
-
+    vNVIC_Configuration();  
+  
+}
+  
 /*******************************************************************************
 * Function Name  : SVPWM_3ShuntCurrentReadingCalibration
 * Description    : Store zero current converted values for current reading 
@@ -538,11 +493,11 @@ _iq vBSP_GetVBus_V(void)
 {
     _iq VBus_pu = _IQ(0.0);
     int i = 0;
-    for( i = 0 ; i < 8 ; i ++)
+    for( i = 0 ; i < 16 ; i ++)
     {
-        VBus_pu += (ADC_RegularConvertedValueTab[i*5+2]&0xffff0000) >> 12;  
+        VBus_pu += (ADC_RegularConvertedValueTab[i*2+1]&0x0000ffff)<<4;  
     }
-    VBus_pu = _IQdiv8(VBus_pu);
+    VBus_pu = _IQdiv16(VBus_pu);
     VBus_pu = _IQmpy(VBus_pu,_IQ(42.9));
     return (VBus_pu);
 }
